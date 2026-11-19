@@ -1,53 +1,120 @@
+<div align="center">
+
+<img src="icon.png" width="84" alt="Jester">
+
 # Jester
 
-**Mehr Ton, schneller durch Videos, Texte vorlesen lassen – ein kleines Chrome-Add-on für den Alltag.**
+**Louder videos. Faster scrubbing. Read exactly the text you want.**
+A free, lightweight Chrome extension – no account, no ads, no tracking.
 
-Jester bündelt drei Helfer, die man sonst einzeln installieren müsste:
+[**⬇ Download**](https://github.com/Kronedeazy/jester/releases/latest) · [Install in 1 minute](#install) · [🇩🇪 Deutsch](#-deutsch)
 
-### 🔊 Lautstärke-Boost
-- Videos und Musik lauter machen als die normale 100 %-Grenze – mit der Taste **V** (3 Stufen, **Shift+V** = aus).
-- Die Stufen sind frei einstellbar (1–24 dB, Standard 3 / 6 / 9 dB).
-- Laute Stellen (Explosionen, Intros) werden automatisch gezähmt, leise Stimmen bekommen den vollen Boost. Ein Schutz-Begrenzer verhindert Kratzen.
-- Das Symbol zeigt pro Tab, wie viel gerade verstärkt wird (z. B. **+6**).
-
-### 🗣️ Vorlesen & Übersetzen
-- Text vorlesen lassen – Deutsch, Englisch, Polnisch, Russisch und Japanisch werden automatisch erkannt.
-- Ins Deutsche übersetzen: als Kasten über dem Text (Klick = kopieren) oder nur vorgelesen.
-- **Roter Rahmen:** linke + rechte Maustaste halten und ziehen – nur der Text im Rahmen wird genommen. Schluss mit „halbe Seite markiert“.
-- Alternativ ganz normal mit links markieren; Rechtsklick kurz = Markierung weg, kurz halten = normales Menü.
-- **Alt+Shift+S** wechselt den Modus, **Esc** stoppt.
-
-### ⏩ Videos mit dem Mausrad
-- **Rad hoch** spult vor: Das Video läuft kurz schneller, bis die eingestellten Sekunden geschafft sind – man verpasst nichts komplett.
-- **Rechte Taste halten + Rad** = schnelles Tempo (bis 16x).
-- **Rad runter** springt zurück, **Pfeiltasten ← →** springen im Vollbild.
-- Funktioniert im Vollbild überall und sonst, sobald die Maus auf dem Video ist. Mehrere Schritte werden zusammengezählt (+5s, +10s …).
-
-### 🎙️ Extra: Mikrofon-Fix für WhatsApp Web
-Schaltet in WhatsApp Web die automatische Mikrofon-Lautstärke und den Rauschfilter aus, damit Sprachnachrichten nicht stottern.
+</div>
 
 ---
 
-Im Menü erklärt der **D**-Knopf (Demo-Modus) jede Funktion direkt an Ort und Stelle.
+## ✨ Highlights
 
-## Installation
+### 🟥 Select text with a frame – not half the page
+Hold **left + right mouse button** and drag a **red frame** around any text. Jester takes *only* what's inside and reads it aloud or translates it. No more selections that run into sidebars, ads and menus.
 
-1. Dieses Projekt herunterladen: oben **Code → Download ZIP**, dann entpacken.
+<img src="docs/frame.png" alt="Red frame selection" width="760">
+
+### ⏩ Fast-forward with the mouse wheel – without skipping a thing
+Scroll **up** on a video and it plays briefly at high speed until the set seconds are covered (e.g. 5 s at 5x = 1 s). You still *see* what happens instead of jumping blindly.
+Hold the **right mouse button** while scrolling for turbo speed (up to 16x). Scroll **down** jumps back. Works on almost every site with a video – fullscreen or just with the mouse over the player.
+
+### 🔊 Volume boost beyond 100 %
+Press **V** for 3 adjustable boost levels (default +3 / +6 / +9 dB), **Shift+V** turns it off. Loud parts (explosions, intros) are tamed automatically while quiet voices get the full boost – and a limiter prevents distortion. The toolbar icon shows the current boost per tab.
+
+---
+
+## 🧰 Everything else
+
+- **Read aloud** in the original language – German, English, Polish, Russian and Japanese are detected automatically.
+- **Translate to German** as an overlay on the page (click to copy) or read aloud only.
+- Prefer classic selecting? Switch the red frame off and just select with the left mouse button.
+- **Arrow keys ← →** jump in fullscreen, even after you clicked somewhere else on the page.
+- Repeated skips add up on screen: +5s, +10s, +15s …
+- **„D“ button** in the menu: demo mode that explains every feature right where it is.
+- Bonus: microphone fix for **WhatsApp Web** (turns off auto gain & noise filter that make voice messages stutter).
+
+<img src="docs/menu.png" alt="Jester menu" width="360">
+
+| Shortcut | Action |
+|---|---|
+| **V** / **Shift+V** | Next boost level / boost off |
+| **Left + right mouse, drag** | Red frame: read / translate the text inside |
+| **Mouse wheel on video** | Up = fast-forward, down = jump back |
+| **Right mouse + wheel** | Turbo fast-forward |
+| **← →** (fullscreen) | Jump back / forward |
+| **Alt+Shift+S** | Switch read / translate mode |
+| **Esc** | Stop reading |
+
+> The interface is in German and translations go into German.
+
+## Install
+
+1. [Download the latest release](https://github.com/Kronedeazy/jester/releases/latest) (`Jester.zip`) and unzip it to a permanent place (e.g. *Documents*).
+2. Open `chrome://extensions` in Chrome.
+3. Turn on **Developer mode** (top right).
+4. Click **Load unpacked** and choose the unzipped `Jester` folder.
+5. Pin Jester via the puzzle icon and reload open tabs (F5).
+
+Made for Chrome; other Chromium browsers (Edge, Brave, Opera, Vivaldi) should work the same way.
+
+## Privacy
+
+- No data collection, no account, no ads, no analytics. Settings stay in your browser.
+- Only when you **translate**, the selected text is sent to Google Translate to fetch the translation.
+- Read-aloud uses the voices built into Chrome / your operating system.
+
+## Limits
+
+- On copy-protected streaming services (Netflix, Prime Video, Disney+) the browser does not allow the volume boost.
+
+## Feedback
+
+Found a bug or have an idea? Open an [issue](https://github.com/Kronedeazy/jester/issues) – feedback is welcome!
+
+If you like Jester, a ⭐ helps others find it.
+
+---
+
+## 🇩🇪 Deutsch
+
+**Lautere Videos. Schneller spulen. Genau den Text vorlesen lassen, den du willst.**
+Kostenloses Chrome-Add-on – ohne Konto, ohne Werbung, ohne Datensammeln.
+
+### Die Highlights
+
+- 🟥 **Text per Rahmen auswählen:** Linke + rechte Maustaste halten und ziehen → roter Rahmen. Nur der Text darin wird vorgelesen oder übersetzt – statt die halbe Seite zu markieren.
+- ⏩ **Mit dem Mausrad vorspulen, ohne etwas zu verpassen:** Rad hoch = das Video läuft kurz schneller, bis die eingestellten Sekunden geschafft sind (5 s bei 5x = 1 s). Rechte Taste halten + Rad = Turbo bis 16x. Rad runter springt zurück.
+- 🔊 **Lauter als 100 %:** Taste **V** für 3 einstellbare Stufen (Standard +3 / +6 / +9 dB), **Shift+V** = aus. Laute Stellen werden gezähmt, leise Stimmen bekommen den vollen Boost, ein Schutz verhindert Kratzen.
+
+### Außerdem
+
+- Vorlesen in der Originalsprache (Deutsch, Englisch, Polnisch, Russisch, Japanisch werden erkannt).
+- Übersetzen ins Deutsche als Kasten über dem Text (Klick = kopieren) oder nur vorgelesen.
+- Lieber klassisch markieren? Rahmen ausschalten und normal mit links markieren.
+- Pfeiltasten ← → springen im Vollbild. Mehrere Sprünge werden zusammengezählt (+5s, +10s …).
+- **„D“-Knopf** im Menü: Demo-Modus erklärt jede Funktion direkt an Ort und Stelle.
+- Extra: Mikrofon-Fix für WhatsApp Web gegen stotternde Sprachnachrichten.
+
+### Installation
+
+1. [Neueste Version herunterladen](https://github.com/Kronedeazy/jester/releases/latest) (`Jester.zip`) und an einem festen Ort entpacken (z. B. *Dokumente*).
 2. In Chrome `chrome://extensions` öffnen.
 3. Oben rechts den **Entwicklermodus** einschalten.
-4. **Entpackte Erweiterung laden** klicken und den entpackten Ordner wählen.
+4. **Entpackte Erweiterung laden** klicken und den Ordner `Jester` wählen.
+5. Über das Puzzle-Symbol anheften und offene Tabs neu laden (F5).
 
-## Datenschutz
+### Datenschutz
 
-- Jester sammelt **keine** Daten, hat kein Konto und keine Werbung. Einstellungen bleiben lokal im Browser.
-- Nur beim **Übersetzen** wird der ausgewählte Text an Google Translate geschickt, um die Übersetzung zu holen.
-- Vorlesen nutzt die Stimmen von Chrome bzw. Windows.
+Keine Datensammlung, kein Konto, keine Werbung. Nur beim **Übersetzen** wird der ausgewählte Text an Google Translate geschickt.
 
-## Grenzen
+Fragen oder Ideen? Einfach ein [Issue](https://github.com/Kronedeazy/jester/issues) schreiben.
 
-- Bei kopiergeschützten Diensten (Netflix, Prime Video, Disney+) kann der Lautstärke-Boost technisch nicht eingreifen.
-- Die Oberfläche ist auf Deutsch.
+## License
 
-## Lizenz
-
-MIT – siehe [LICENSE](LICENSE).
+MIT – see [LICENSE](LICENSE).
