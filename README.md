@@ -38,7 +38,6 @@ Press **V** for 3 adjustable boost levels (default +3 / +6 / +9 dB), **Shift+V**
 - **Arrow keys ← →** jump in fullscreen, even after you clicked somewhere else on the page.
 - Repeated skips add up on screen: +5s, +10s, +15s …
 - **„D“ button** in the menu: demo mode that explains every feature right where it is – and lets you **change the keys**.
-- Bonus: microphone fix for **WhatsApp Web** (turns off auto gain & noise filter that make voice messages stutter).
 
 <img src="docs/menu.png" alt="Jester menu" width="360">
 
@@ -101,7 +100,6 @@ Kostenloses Chrome-Add-on – ohne Konto, ohne Werbung, ohne Datensammeln.
 - Lieber klassisch markieren? Rahmen ausschalten und normal mit links markieren.
 - Pfeiltasten ← → springen im Vollbild. Mehrere Sprünge werden zusammengezählt (+5s, +10s …).
 - **„D“-Knopf** im Menü: Demo-Modus erklärt jede Funktion direkt an Ort und Stelle – und dort lassen sich die **Tasten ändern**.
-- Extra: Mikrofon-Fix für WhatsApp Web gegen stotternde Sprachnachrichten.
 
 ### Installation
 

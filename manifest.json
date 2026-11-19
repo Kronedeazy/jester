@@ -52,17 +52,6 @@
       "run_at": "document_idle",
       "all_frames": true,
       "world": "MAIN"
-    },
-    {
-      "matches": [
-        "https://web.whatsapp.com/*"
-      ],
-      "js": [
-        "whatsapp-mic-fix.js"
-      ],
-      "run_at": "document_start",
-      "world": "MAIN",
-      "all_frames": true
     }
   ],
   "default_locale": "en"
