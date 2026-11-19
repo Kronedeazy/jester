@@ -115,6 +115,12 @@ Keine Datensammlung, kein Konto, keine Werbung. Nur beim **Übersetzen** wird de
 
 Fragen oder Ideen? Einfach ein [Issue](https://github.com/Kronedeazy/jester/issues) schreiben.
 
+## Version
+
+**1.0 – first official release.** Before going public, Jester went through about 30 internal versions.
+
+**1.0 – erste offizielle Version.** Vor der Veröffentlichung gab es rund 30 interne Versionen.
+
 ## License
 
 MIT – see [LICENSE](LICENSE).
