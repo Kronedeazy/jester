@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    :root {
+      --bg-pure: #050505;
+      --bg-card: #111113;
+      --bg-pill: #1a1a1e;
+      --border-soft: #26262c;
+      --text-white: #ffffff;
+      --text-muted: #a1a1aa;
+      --strawberry-pink: #f4a7b9;
+      --teal-green: #10b981;
+      --soft-purple: #a78bfa;
+      --crimson-red: #e11d48;
+    }
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      user-select: none;
+    }
+    body {
+      width: 400px;
+      margin: 0;
+      padding: 14px;
+      background-color: var(--bg-pure);
+      color: var(--text-white);
+    }
+    .container { display: flex; flex-direction: column; gap: 10px; }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 12px 9px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 999px;
+    }
+    .header img { width: 30px; height: 36px; object-fit: contain; }
+    .header-title { display: flex; flex-direction: column; flex: 1; }
+    .header-title h3 { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: 2px; }
+    .header-title span { font-size: 11px; color: var(--strawberry-pink); }
+    #demo-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid #3f3f46;
+      background: var(--bg-pill);
+      color: var(--text-muted);
+      font-size: 12.5px;
+      font-weight: 800;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    #demo-btn:hover { color: #fff; border-color: var(--strawberry-pink); }
+    body.demo #demo-btn { background: var(--strawberry-pink); border-color: var(--strawberry-pink); color: #050505; }
+
+    /* Demo-Modus: Erklaerungen erscheinen direkt unter den Bereichen */
+    .explain {
+      display: none;
+      background: #1c1c22;
+      border: 1px solid #3a2a30;
+      border-left: 3px solid var(--strawberry-pink);
+      border-radius: 12px;
+      padding: 8px 11px;
+      font-size: 11.5px;
+      line-height: 1.5;
+      color: #e4e4e7;
+    }
+    .explain b { color: var(--strawberry-pink); }
+    body.demo .explain { display: block; }
+    #demo-intro { display: none; }
+    body.demo #demo-intro { display: block; }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 22px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .card-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot-pink { background: var(--strawberry-pink); box-shadow: 0 0 8px var(--strawberry-pink); }
+    .dot-purple { background: var(--soft-purple); box-shadow: 0 0 8px var(--soft-purple); }
+    .dot-teal { background: var(--teal-green); box-shadow: 0 0 8px var(--teal-green); }
+
+    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    button.mode-btn {
+      padding: 8px 10px;
+      border: 1px solid var(--border-soft);
+      border-radius: 999px;
+      background: var(--bg-pill);
+      color: var(--text-muted);
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    button.mode-btn:hover { border-color: #3f3f46; color: var(--text-white); }
+    button.mode-btn.active-reader { background: rgba(16,185,129,0.18); border-color: var(--teal-green); color: #fff; box-shadow: 0 0 12px rgba(16,185,129,0.25); }
+    button.mode-btn.active-translator { background: rgba(244,167,185,0.20); border-color: var(--strawberry-pink); color: #fff; box-shadow: 0 0 12px rgba(244,167,185,0.25); }
+    button.mode-btn.active-translator-audio { background: rgba(167,139,250,0.20); border-color: var(--soft-purple); color: #fff; box-shadow: 0 0 12px rgba(167,139,250,0.25); }
+    button.mode-btn.active-off { background: rgba(225,29,72,0.20); border-color: var(--crimson-red); color: #fff; }
+
+    .row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; gap: 8px; }
+    .sub-label { color: var(--text-muted); font-size: 11.5px; display: flex; align-items: center; gap: 6px; }
+    .val { color: #fff; font-weight: 700; font-size: 11.5px; min-width: 44px; text-align: right; }
+    .unit-wrap { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+    .pill-btn {
+      background: var(--bg-pill);
+      border: 1px solid var(--border-soft);
+      color: var(--strawberry-pink);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .pill-btn:hover { border-color: var(--strawberry-pink); }
+    input[type="range"] { width: 100%; accent-color: var(--strawberry-pink); cursor: pointer; height: 5px; margin: 0; }
+    input[type="range"].purple { accent-color: var(--soft-purple); }
+    input[type="number"] {
+      width: 54px;
+      background: var(--bg-pill);
+      border: 1px solid var(--border-soft);
+      color: #fff;
+      border-radius: 999px;
+      text-align: center;
+      padding: 3px 6px;
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+    }
+    input[type="number"]:focus { border-color: var(--strawberry-pink); }
+
+    /* Boost-Stufen: Schieberegler in 1-dB-Schritten */
+    .stage-row { display: grid; grid-template-columns: 56px 1fr 52px; align-items: center; gap: 10px; }
+    .stage-name { font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; }
+
+    .slider-block { display: flex; flex-direction: column; gap: 5px; }
+    .hint { color: #71717a; font-size: 11px; }
+
+    .switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: #27272a; transition: .2s; border-radius: 999px; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: #fff; transition: .2s; border-radius: 50%; }
+    input:checked + .slider.pink { background-color: var(--strawberry-pink); }
+    input:checked + .slider.purple { background-color: var(--soft-purple); }
+    input:checked + .slider.teal { background-color: var(--teal-green); }
+    input:checked + .slider:before { transform: translateX(18px); }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 0 6px;
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+    .footer strong { color: var(--strawberry-pink); }
+    .footer input[type="number"] { width: 46px; padding: 2px 4px; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="icon.png" alt="">
+      <div class="header-title">
+        <h3>JESTER</h3>
+        <span>Lautstärke &bull; Vorlesen &bull; Video-Spulen</span>
+      </div>
+      <button id="demo-btn" title="Demo-Modus: erkl&auml;rt alles">D</button>
+    </div>
+
+    <div class="explain" id="demo-intro">
+      <b>Demo-Modus</b>: Unter jedem Bereich steht jetzt, was er macht und wie du ihn bedienst. Nochmal auf <b>D</b> klicken blendet die Erkl&auml;rungen wieder aus.
+    </div>
+
+    <!-- LAUTSTAERKE -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><span class="dot dot-pink"></span>Lautst&auml;rke-Boost (Taste V)</span>
+        <label class="switch" title="Lautst&auml;rke-Boost an/aus">
+          <input type="checkbox" id="enable-audio" checked>
+          <span class="slider pink"></span>
+        </label>
+      </div>
+      <div class="stage-row">
+        <span class="stage-name">STUFE 1</span>
+        <input type="range" id="boost-1" min="1" max="24" step="1" value="3">
+        <span class="val" id="boost-1-val">+3 dB</span>
+      </div>
+      <div class="stage-row">
+        <span class="stage-name">STUFE 2</span>
+        <input type="range" id="boost-2" min="1" max="24" step="1" value="6">
+        <span class="val" id="boost-2-val">+6 dB</span>
+      </div>
+      <div class="stage-row">
+        <span class="stage-name">STUFE 3</span>
+        <input type="range" id="boost-3" min="1" max="24" step="1" value="9">
+        <span class="val" id="boost-3-val">+9 dB</span>
+      </div>
+      <div class="explain">
+        Macht Videos und Musik lauter als die normale 100&nbsp;%-Grenze. <b>V</b> schaltet weiter: Aus &rarr; Stufe 1 &rarr; 2 &rarr; 3 &rarr; Aus. <b>Shift+V</b> = sofort aus. Gilt nur f&uuml;r den aktuellen Tab, das Symbol oben zeigt dann z.&nbsp;B. <b>+6</b>.<br>
+        Laute Stellen (Explosionen, Intros) werden automatisch gez&auml;hmt, leise Stimmen bekommen den vollen Boost. Ein Schutz verhindert Kratzen.<br>
+        Faustregel: <b>+6&nbsp;dB</b> &asymp; deutlich lauter, <b>+10&nbsp;dB</b> &asymp; doppelt so laut. Bei Netflix &amp; Co. (Kopierschutz) geht der Boost nicht.
+      </div>
+    </div>
+
+    <!-- LESEN & UEBERSETZEN -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><span class="dot dot-teal"></span>Vorlesen &amp; &Uuml;bersetzen</span>
+        <button id="reset-rate" class="pill-btn" title="Vorlesetempo zur&uuml;ck auf 1.35x">Reset 1.35x</button>
+      </div>
+      <div class="mode-grid">
+        <button id="btn-reader" class="mode-btn">Original vorlesen</button>
+        <button id="btn-translator" class="mode-btn">DE + Overlay</button>
+        <button id="btn-translator-audio" class="mode-btn">DE ohne Overlay</button>
+        <button id="btn-off" class="mode-btn">Aus</button>
+      </div>
+      <div class="row">
+        <span class="sub-label">Vorlesetempo</span>
+        <span class="val" id="rate-val">1.35x</span>
+      </div>
+      <input type="range" id="rate-slider" min="0.80" max="2.20" step="0.05" value="1.35">
+      <div class="row">
+        <span class="sub-label">Im Overlay-Modus zus&auml;tzlich vorlesen</span>
+        <label class="switch">
+          <input type="checkbox" id="tts-translator" checked>
+          <span class="slider teal"></span>
+        </label>
+      </div>
+      <div class="row">
+        <span class="sub-label">Markieren mit linker + rechter Taste</span>
+        <label class="switch">
+          <input type="checkbox" id="select-box" checked>
+          <span class="slider teal"></span>
+        </label>
+      </div>
+      <div class="explain" id="explain-select"></div>
+      <div class="explain">
+        <b>Original vorlesen</b>: liest den Text in seiner Sprache vor (Deutsch, Englisch, Polnisch, Russisch, Japanisch werden erkannt).<br>
+        <b>DE + Overlay</b>: &uuml;bersetzt ins Deutsche und legt die &Uuml;bersetzung als Kasten &uuml;ber den Text, ein Klick darauf kopiert sie.<br>
+        <b>DE ohne Overlay</b>: &uuml;bersetzt und liest nur vor.<br>
+        <b>Esc</b> oder ein Klick stoppt. <b>Alt+Shift+S</b> wechselt den Modus. Auch &uuml;ber Rechtsklick &rarr; &bdquo;Markierung vorlesen / &uuml;bersetzen&ldquo;.
+      </div>
+    </div>
+
+    <!-- MAUSRAD & PFEILE -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><span class="dot dot-purple"></span>Mausrad &amp; Pfeile (Video)</span>
+        <label class="switch" title="Mausrad &amp; Pfeile an/aus">
+          <input type="checkbox" id="enable-wheel" checked>
+          <span class="slider purple"></span>
+        </label>
+      </div>
+      <div class="row">
+        <span class="sub-label">Sekunden pro Schritt</span>
+        <div class="unit-wrap">
+          <input type="number" id="wheel-step" min="1" max="120" step="1" value="5">
+          <span>Sek.</span>
+        </div>
+      </div>
+      <div class="slider-block">
+        <div class="row">
+          <span class="sub-label">Tempo: nur scrollen</span>
+          <span class="val" id="ff-rate-val">3x</span>
+        </div>
+        <input type="range" class="purple" id="ff-rate" min="1.5" max="10" step="0.5" value="3">
+      </div>
+      <div class="slider-block">
+        <div class="row">
+          <span class="sub-label">Tempo: rechte Taste halten + scrollen</span>
+          <span class="val" id="ff-rate-fast-val">8x</span>
+        </div>
+        <input type="range" class="purple" id="ff-rate-fast" min="2" max="16" step="0.5" value="8">
+      </div>
+      <div class="hint" id="ff-hint"></div>
+      <div class="explain">
+        <b>Rad hoch</b> = vorspulen: Das Video l&auml;uft kurz schneller, bis die eingestellten Sekunden geschafft sind (5&nbsp;s bei 5x = 1&nbsp;s lang schnell). Mehrmals drehen = l&auml;nger.<br>
+        <b>Rechte Taste halten + Rad</b> = schnelles Tempo, beim Loslassen kommt kein Rechtsklick-Men&uuml;.<br>
+        <b>Rad runter</b> = zur&uuml;ckspringen. Das Rad wirkt im Vollbild &uuml;berall, sonst sobald die Maus auf dem Video ist.<br>
+        <b>Pfeiltasten &larr; &rarr;</b> = im Vollbild sofort springen. Mehrmals hintereinander: die Anzeige z&auml;hlt zusammen (+5s, +10s &hellip;).
+      </div>
+    </div>
+
+    <div class="footer">
+      <span><strong>V</strong> Lautst&auml;rke &bull; <strong>Alt+Shift+S</strong> Lesemodus</span>
+      <span class="unit-wrap" title="Wie lange die Hinweise oben rechts sichtbar bleiben">Hinweise <input type="number" id="toast-seconds" min="0.2" max="10" step="0.1" value="0.8"> s</span>
+    </div>
+    <div class="explain">
+      <b>Hinweise</b>: So lange bleiben die kleinen Meldungen oben rechts im Video sichtbar (z.&nbsp;B. &bdquo;+5s&ldquo; oder &bdquo;Stufe 2&ldquo;).
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
