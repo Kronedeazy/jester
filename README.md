@@ -32,11 +32,12 @@ Press **V** for 3 adjustable boost levels (default +3 / +6 / +9 dB), **Shift+V**
 ## 🧰 Everything else
 
 - **Read aloud** in the original language – German, English, Polish, Russian and Japanese are detected automatically.
-- **Translate to German** as an overlay on the page (click to copy) or read aloud only.
+- **Translate** into English or German as an overlay on the page (click to copy) or read aloud only.
+- **English & German** interface – switch with one click, starts in your browser's language.
 - Prefer classic selecting? Switch the red frame off and just select with the left mouse button.
 - **Arrow keys ← →** jump in fullscreen, even after you clicked somewhere else on the page.
 - Repeated skips add up on screen: +5s, +10s, +15s …
-- **„D“ button** in the menu: demo mode that explains every feature right where it is.
+- **„D“ button** in the menu: demo mode that explains every feature right where it is – and lets you **change the keys**.
 - Bonus: microphone fix for **WhatsApp Web** (turns off auto gain & noise filter that make voice messages stutter).
 
 <img src="docs/menu.png" alt="Jester menu" width="360">
@@ -51,7 +52,7 @@ Press **V** for 3 adjustable boost levels (default +3 / +6 / +9 dB), **Shift+V**
 | **Alt+Shift+S** | Switch read / translate mode |
 | **Esc** | Stop reading |
 
-> The interface is in German and translations go into German.
+> Keys for boost and jumping can be changed in the menu (click **D**).
 
 ## Install
 
@@ -95,10 +96,11 @@ Kostenloses Chrome-Add-on – ohne Konto, ohne Werbung, ohne Datensammeln.
 ### Außerdem
 
 - Vorlesen in der Originalsprache (Deutsch, Englisch, Polnisch, Russisch, Japanisch werden erkannt).
-- Übersetzen ins Deutsche als Kasten über dem Text (Klick = kopieren) oder nur vorgelesen.
+- Übersetzen ins Deutsche oder Englische als Kasten über dem Text (Klick = kopieren) oder nur vorgelesen.
+- Oberfläche auf Deutsch und Englisch – per Klick umschaltbar, startet in der Sprache des Browsers.
 - Lieber klassisch markieren? Rahmen ausschalten und normal mit links markieren.
 - Pfeiltasten ← → springen im Vollbild. Mehrere Sprünge werden zusammengezählt (+5s, +10s …).
-- **„D“-Knopf** im Menü: Demo-Modus erklärt jede Funktion direkt an Ort und Stelle.
+- **„D“-Knopf** im Menü: Demo-Modus erklärt jede Funktion direkt an Ort und Stelle – und dort lassen sich die **Tasten ändern**.
 - Extra: Mikrofon-Fix für WhatsApp Web gegen stotternde Sprachnachrichten.
 
 ### Installation

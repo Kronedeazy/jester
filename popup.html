@@ -174,6 +174,39 @@
     }
     .footer strong { color: var(--strawberry-pink); }
     .footer input[type="number"] { width: 46px; padding: 2px 4px; font-size: 11px; }
+    .head-btns { display: flex; gap: 6px; flex-shrink: 0; }
+    #lang-btn {
+      height: 28px;
+      padding: 0 9px;
+      border-radius: 999px;
+      border: 1px solid #3f3f46;
+      background: var(--bg-pill);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    #lang-btn:hover { color: #fff; border-color: var(--strawberry-pink); }
+    /* Tasten-Bereich: nur im D-Modus sichtbar */
+    #keys-card { display: none; }
+    body.demo #keys-card { display: flex; }
+    .key-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .key-btn {
+      min-width: 74px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid #3f3f46;
+      border-bottom-width: 3px;
+      background: var(--bg-pill);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .key-btn:hover { border-color: var(--strawberry-pink); }
+    .key-btn.listening { border-color: var(--strawberry-pink); color: var(--strawberry-pink); }
+    .key-fixed { font-size: 11px; color: var(--text-muted); text-align: right; }
+    .link-btn { background: none; border: none; color: var(--strawberry-pink); font-size: 11px; cursor: pointer; padding: 0; text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -182,132 +215,132 @@
       <img src="icon.png" alt="">
       <div class="header-title">
         <h3>JESTER</h3>
-        <span>Lautstärke &bull; Vorlesen &bull; Video-Spulen</span>
+        <span data-i18n="tagline"></span>
       </div>
-      <button id="demo-btn" title="Demo-Modus: erkl&auml;rt alles">D</button>
+      <div class="head-btns">
+        <button id="lang-btn" data-i18n-title="langTitle">EN</button>
+        <button id="demo-btn" data-i18n-title="demoTitle">D</button>
+      </div>
     </div>
 
-    <div class="explain" id="demo-intro">
-      <b>Demo-Modus</b>: Unter jedem Bereich steht jetzt, was er macht und wie du ihn bedienst. Nochmal auf <b>D</b> klicken blendet die Erkl&auml;rungen wieder aus.
+    <div class="explain" id="demo-intro" data-i18n-html="demoIntro"></div>
+
+    <!-- TASTEN (nur im D-Modus) -->
+    <div class="card" id="keys-card">
+      <div class="card-header">
+        <span class="card-title"><span class="dot dot-pink"></span><span data-i18n="keysTitle"></span></span>
+        <button class="pill-btn" id="keys-reset" data-i18n="keysReset"></button>
+      </div>
+      <div class="key-row"><span class="sub-label" data-i18n="keyBoost"></span><button class="key-btn" data-key="key_boost"></button></div>
+      <div class="key-row"><span class="sub-label" data-i18n="keyBack"></span><button class="key-btn" data-key="key_back"></button></div>
+      <div class="key-row"><span class="sub-label" data-i18n="keyFwd"></span><button class="key-btn" data-key="key_fwd"></button></div>
+      <div class="key-row"><span class="sub-label" data-i18n="keyMode"></span><button class="link-btn" id="shortcuts-link" data-i18n="keyModeChange"></button></div>
+      <div class="key-row"><span class="sub-label" data-i18n="keyFrame"></span><span class="key-fixed" data-i18n="keyFrameVal"></span></div>
+      <div class="key-row"><span class="sub-label" data-i18n="keyTurbo"></span><span class="key-fixed" data-i18n="keyTurboVal"></span></div>
+      <div class="hint" id="keys-hint" data-i18n="keysHint"></div>
     </div>
 
     <!-- LAUTSTAERKE -->
     <div class="card">
       <div class="card-header">
-        <span class="card-title"><span class="dot dot-pink"></span>Lautst&auml;rke-Boost (Taste V)</span>
-        <label class="switch" title="Lautst&auml;rke-Boost an/aus">
+        <span class="card-title"><span class="dot dot-pink"></span><span id="boost-title"></span></span>
+        <label class="switch">
           <input type="checkbox" id="enable-audio" checked>
           <span class="slider pink"></span>
         </label>
       </div>
       <div class="stage-row">
-        <span class="stage-name">STUFE 1</span>
+        <span class="stage-name"><span data-i18n="level"></span> 1</span>
         <input type="range" id="boost-1" min="1" max="24" step="1" value="3">
         <span class="val" id="boost-1-val">+3 dB</span>
       </div>
       <div class="stage-row">
-        <span class="stage-name">STUFE 2</span>
+        <span class="stage-name"><span data-i18n="level"></span> 2</span>
         <input type="range" id="boost-2" min="1" max="24" step="1" value="6">
         <span class="val" id="boost-2-val">+6 dB</span>
       </div>
       <div class="stage-row">
-        <span class="stage-name">STUFE 3</span>
+        <span class="stage-name"><span data-i18n="level"></span> 3</span>
         <input type="range" id="boost-3" min="1" max="24" step="1" value="9">
         <span class="val" id="boost-3-val">+9 dB</span>
       </div>
-      <div class="explain">
-        Macht Videos und Musik lauter als die normale 100&nbsp;%-Grenze. <b>V</b> schaltet weiter: Aus &rarr; Stufe 1 &rarr; 2 &rarr; 3 &rarr; Aus. <b>Shift+V</b> = sofort aus. Gilt nur f&uuml;r den aktuellen Tab, das Symbol oben zeigt dann z.&nbsp;B. <b>+6</b>.<br>
-        Laute Stellen (Explosionen, Intros) werden automatisch gez&auml;hmt, leise Stimmen bekommen den vollen Boost. Ein Schutz verhindert Kratzen.<br>
-        Faustregel: <b>+6&nbsp;dB</b> &asymp; deutlich lauter, <b>+10&nbsp;dB</b> &asymp; doppelt so laut. Bei Netflix &amp; Co. (Kopierschutz) geht der Boost nicht.
-      </div>
+      <div class="explain" id="explain-boost"></div>
     </div>
 
     <!-- LESEN & UEBERSETZEN -->
     <div class="card">
       <div class="card-header">
-        <span class="card-title"><span class="dot dot-teal"></span>Vorlesen &amp; &Uuml;bersetzen</span>
-        <button id="reset-rate" class="pill-btn" title="Vorlesetempo zur&uuml;ck auf 1.35x">Reset 1.35x</button>
+        <span class="card-title"><span class="dot dot-teal"></span><span data-i18n="readTitle"></span></span>
+        <button id="reset-rate" class="pill-btn">Reset 1.35x</button>
       </div>
       <div class="mode-grid">
-        <button id="btn-reader" class="mode-btn">Original vorlesen</button>
-        <button id="btn-translator" class="mode-btn">DE + Overlay</button>
-        <button id="btn-translator-audio" class="mode-btn">DE ohne Overlay</button>
-        <button id="btn-off" class="mode-btn">Aus</button>
+        <button id="btn-reader" class="mode-btn" data-i18n="modeReader"></button>
+        <button id="btn-translator" class="mode-btn" data-i18n="modeOverlay"></button>
+        <button id="btn-translator-audio" class="mode-btn" data-i18n="modeAudio"></button>
+        <button id="btn-off" class="mode-btn" data-i18n="modeOff"></button>
       </div>
       <div class="row">
-        <span class="sub-label">Vorlesetempo</span>
+        <span class="sub-label" data-i18n="rate"></span>
         <span class="val" id="rate-val">1.35x</span>
       </div>
       <input type="range" id="rate-slider" min="0.80" max="2.20" step="0.05" value="1.35">
       <div class="row">
-        <span class="sub-label">Im Overlay-Modus zus&auml;tzlich vorlesen</span>
+        <span class="sub-label" data-i18n="ttsOverlay"></span>
         <label class="switch">
           <input type="checkbox" id="tts-translator" checked>
           <span class="slider teal"></span>
         </label>
       </div>
       <div class="row">
-        <span class="sub-label">Markieren mit linker + rechter Taste</span>
+        <span class="sub-label" data-i18n="selectBox"></span>
         <label class="switch">
           <input type="checkbox" id="select-box" checked>
           <span class="slider teal"></span>
         </label>
       </div>
       <div class="explain" id="explain-select"></div>
-      <div class="explain">
-        <b>Original vorlesen</b>: liest den Text in seiner Sprache vor (Deutsch, Englisch, Polnisch, Russisch, Japanisch werden erkannt).<br>
-        <b>DE + Overlay</b>: &uuml;bersetzt ins Deutsche und legt die &Uuml;bersetzung als Kasten &uuml;ber den Text, ein Klick darauf kopiert sie.<br>
-        <b>DE ohne Overlay</b>: &uuml;bersetzt und liest nur vor.<br>
-        <b>Esc</b> oder ein Klick stoppt. <b>Alt+Shift+S</b> wechselt den Modus. Auch &uuml;ber Rechtsklick &rarr; &bdquo;Markierung vorlesen / &uuml;bersetzen&ldquo;.
-      </div>
+      <div class="explain" data-i18n-html="explainRead"></div>
     </div>
 
     <!-- MAUSRAD & PFEILE -->
     <div class="card">
       <div class="card-header">
-        <span class="card-title"><span class="dot dot-purple"></span>Mausrad &amp; Pfeile (Video)</span>
-        <label class="switch" title="Mausrad &amp; Pfeile an/aus">
+        <span class="card-title"><span class="dot dot-purple"></span><span data-i18n="wheelTitle"></span></span>
+        <label class="switch">
           <input type="checkbox" id="enable-wheel" checked>
           <span class="slider purple"></span>
         </label>
       </div>
       <div class="row">
-        <span class="sub-label">Sekunden pro Schritt</span>
+        <span class="sub-label" data-i18n="stepSec"></span>
         <div class="unit-wrap">
           <input type="number" id="wheel-step" min="1" max="120" step="1" value="5">
-          <span>Sek.</span>
+          <span data-i18n="sec"></span>
         </div>
       </div>
       <div class="slider-block">
         <div class="row">
-          <span class="sub-label">Tempo: nur scrollen</span>
+          <span class="sub-label" data-i18n="ffSlow"></span>
           <span class="val" id="ff-rate-val">3x</span>
         </div>
         <input type="range" class="purple" id="ff-rate" min="1.5" max="10" step="0.5" value="3">
       </div>
       <div class="slider-block">
         <div class="row">
-          <span class="sub-label">Tempo: rechte Taste halten + scrollen</span>
+          <span class="sub-label" data-i18n="ffFast"></span>
           <span class="val" id="ff-rate-fast-val">8x</span>
         </div>
         <input type="range" class="purple" id="ff-rate-fast" min="2" max="16" step="0.5" value="8">
       </div>
       <div class="hint" id="ff-hint"></div>
-      <div class="explain">
-        <b>Rad hoch</b> = vorspulen: Das Video l&auml;uft kurz schneller, bis die eingestellten Sekunden geschafft sind (5&nbsp;s bei 5x = 1&nbsp;s lang schnell). Mehrmals drehen = l&auml;nger.<br>
-        <b>Rechte Taste halten + Rad</b> = schnelles Tempo, beim Loslassen kommt kein Rechtsklick-Men&uuml;.<br>
-        <b>Rad runter</b> = zur&uuml;ckspringen. Das Rad wirkt im Vollbild &uuml;berall, sonst sobald die Maus auf dem Video ist.<br>
-        <b>Pfeiltasten &larr; &rarr;</b> = im Vollbild sofort springen. Mehrmals hintereinander: die Anzeige z&auml;hlt zusammen (+5s, +10s &hellip;).
-      </div>
+      <div class="explain" id="explain-wheel"></div>
     </div>
 
     <div class="footer">
-      <span><strong>V</strong> Lautst&auml;rke &bull; <strong>Alt+Shift+S</strong> Lesemodus</span>
-      <span class="unit-wrap" title="Wie lange die Hinweise oben rechts sichtbar bleiben">Hinweise <input type="number" id="toast-seconds" min="0.2" max="10" step="0.1" value="0.8"> s</span>
+      <span id="footer-keys"></span>
+      <span class="unit-wrap"><span data-i18n="toasts"></span> <input type="number" id="toast-seconds" min="0.2" max="10" step="0.1" value="0.8"> s</span>
     </div>
-    <div class="explain">
-      <b>Hinweise</b>: So lange bleiben die kleinen Meldungen oben rechts im Video sichtbar (z.&nbsp;B. &bdquo;+5s&ldquo; oder &bdquo;Stufe 2&ldquo;).
-    </div>
+    <div class="explain" data-i18n-html="explainToasts"></div>
   </div>
 
   <script src="popup.js"></script>

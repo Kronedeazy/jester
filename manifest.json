@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Jester",
+  "name": "__MSG_extName__",
   "version": "1.0.0",
-  "description": "Lautstärke-Boost, Vorlesen & Übersetzen per Rahmen-Auswahl und Videos mit dem Mausrad vorspulen.",
+  "description": "__MSG_extDesc__",
   "permissions": [
     "storage",
     "contextMenus"
@@ -28,7 +28,7 @@
       "suggested_key": {
         "default": "Alt+Shift+S"
       },
-      "description": "Vorlese-/Übersetzungsmodus durchschalten"
+      "description": "__MSG_cmdCycle__"
     }
   },
   "content_scripts": [
@@ -64,5 +64,6 @@
       "world": "MAIN",
       "all_frames": true
     }
-  ]
+  ],
+  "default_locale": "en"
 }

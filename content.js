@@ -11,6 +11,13 @@
   let ffRateFast = 8;           // Vorspul-Tempo: rechte Taste halten + scrollen
   let toastSeconds = 0.8;
 
+  // Sprache (Menue, Hinweise, Uebersetzungsziel): "de" oder "en", Standard = Sprache von Chrome
+  let lang = (navigator.language || "en").toLowerCase().startsWith("de") ? "de" : "en";
+  // Tasten (im Menue unter "D" aenderbar)
+  let keyBoost = "v";
+  let keyBack = "ArrowLeft";
+  let keyFwd = "ArrowRight";
+
   let enableAudio = true;
   let audioStages = [3, 6, 9];  // dB je Stufe
   let audioStage = 0;           // 0 = aus, 1-3 = Stufe (pro Tab)
@@ -38,9 +45,42 @@
 
   const stepFor = (forward) => (forward ? wheelStep : -wheelStep);
 
+  const TXT = {
+    de: {
+      protected: "Lautstärke: hier geschützt – nicht möglich",
+      volOff: "🔈 Lautstärke: Original",
+      level: "Stufe",
+      transFail: "Übersetzung fehlgeschlagen",
+      noText: "Kein Text im Rahmen",
+      releaseMenu: "Loslassen = Menü",
+      copyTitle: "Klicken zum Kopieren der Übersetzung"
+    },
+    en: {
+      protected: "Volume: protected here – not possible",
+      volOff: "🔈 Volume: original",
+      level: "Level",
+      transFail: "Translation failed",
+      noText: "No text in frame",
+      releaseMenu: "Release = menu",
+      copyTitle: "Click to copy the translation"
+    }
+  };
+  const t = (k) => (TXT[lang] || TXT.en)[k];
+  const targetVoice = () => (lang === "de" ? "de-DE" : "en-US");
+  // Taste vergleichen: Buchstaben ohne Gross/Klein, sonst genauer Name (z. B. ArrowLeft)
+  const keyIs = (e, bound) => {
+    if (!bound) return false;
+    const k = e.key || "";
+    return bound.length === 1 ? k.toLowerCase() === bound.toLowerCase() : k === bound;
+  };
+
   // ===================== Speicher laden + live mitgehen =====================
   chrome.storage.local.get(null, (res) => {
     if (res.mode) currentMode = res.mode;
+    if (res.lang === "de" || res.lang === "en") lang = res.lang;
+    if (res.key_boost) keyBoost = res.key_boost;
+    if (res.key_back) keyBack = res.key_back;
+    if (res.key_fwd) keyFwd = res.key_fwd;
     if (res.rate !== undefined) speechRate = Number(res.rate);
     if (res.ttsInTranslator !== undefined) ttsInTranslator = res.ttsInTranslator;
     if (res.select_box !== undefined) selectBox = res.select_box;
@@ -58,6 +98,10 @@
       currentMode = changes.mode.newValue;
       if (currentMode === "off") stopAllSpeechAndOverlay();
     }
+    if (changes.lang && changes.lang.newValue) lang = changes.lang.newValue;
+    if (changes.key_boost) keyBoost = changes.key_boost.newValue || "v";
+    if (changes.key_back) keyBack = changes.key_back.newValue || "ArrowLeft";
+    if (changes.key_fwd) keyFwd = changes.key_fwd.newValue || "ArrowRight";
     if (changes.rate) speechRate = Number(changes.rate.newValue);
     if (changes.ttsInTranslator) ttsInTranslator = changes.ttsInTranslator.newValue;
     if (changes.select_box) selectBox = changes.select_box.newValue;
@@ -322,13 +366,13 @@
     const m = getActiveMedia();
     const next = forceOff ? 0 : (audioStage + 1) % 4;
     if (next > 0 && m && !hookedMedia.has(m) && isAudioProtected(m)) {
-      showToast("Lautstärke: hier geschützt – nicht möglich", "#e11d48");
+      showToast(t("protected"), "#e11d48");
       return;
     }
     audioStage = next;
     applyAudioToAll();
-    if (audioStage === 0) showToast("🔈 Lautstärke: Original", "#a78bfa");
-    else showToast("🔊 Stufe " + audioStage + "/3 · +" + stageDb(audioStage) + " dB", "#f4a7b9");
+    if (audioStage === 0) showToast(t("volOff"), "#a78bfa");
+    else showToast("🔊 " + t("level") + " " + audioStage + "/3 · +" + stageDb(audioStage) + " dB", "#f4a7b9");
   }
 
   // ===================== Mausrad & Pfeiltasten =====================
@@ -648,7 +692,7 @@
       userSelect: "none",
       boxShadow: "0 4px 14px rgba(0,0,0,0.65)"
     });
-    overlay.title = "Klicken zum Kopieren der Übersetzung";
+    overlay.title = t("copyTitle");
     overlay.addEventListener("mousedown", (e) => {
       e.stopPropagation();
       navigator.clipboard.writeText(translatedText).then(() => {
@@ -686,19 +730,19 @@
     const withOverlay = currentMode === "translator";
     requestTranslation(text, (response) => {
       if (!response || response.error) {
-        showToast("Übersetzung fehlgeschlagen", "#e11d48");
+        showToast(t("transFail"), "#e11d48");
         return;
       }
-      // Schon Deutsch? Dann das Original vorlesen statt einer "Uebersetzung" ins Deutsche
-      if ((response.sourceLang || "").toLowerCase().startsWith("de")) {
-        if (!withOverlay || ttsInTranslator) speakText(text, "de-DE");
+      // Schon in der Zielsprache? Dann das Original vorlesen statt einer "Uebersetzung"
+      if ((response.sourceLang || "").toLowerCase().startsWith(lang)) {
+        if (!withOverlay || ttsInTranslator) speakText(text, targetVoice());
         return;
       }
       if (withOverlay) {
         showTextOverlay(range, response.translatedText);
-        if (ttsInTranslator) speakText(response.translatedText, "de-DE");
+        if (ttsInTranslator) speakText(response.translatedText, targetVoice());
       } else {
-        speakText(response.translatedText, "de-DE");
+        speakText(response.translatedText, targetVoice());
       }
     });
   }
@@ -706,7 +750,7 @@
   // Der Hintergrund-Teil von Chrome schlaeft manchmal ein: dann einmal kurz neu versuchen
   function requestTranslation(text, cb, retry = true) {
     try {
-      chrome.runtime.sendMessage({ action: "translate", text }, (response) => {
+      chrome.runtime.sendMessage({ action: "translate", text, target: lang }, (response) => {
         if (chrome.runtime.lastError) {
           if (retry) setTimeout(() => requestTranslation(text, cb, false), 250);
           else cb(null);
@@ -816,7 +860,7 @@
     if (boxEl) { boxEl.remove(); boxEl = null; }
     if (r.right - r.left < 6 || r.bottom - r.top < 6) return;
     const words = collectBoxWords(r);
-    if (words.length === 0) { showToast("Kein Text im Rahmen", "#e11d48"); return; }
+    if (words.length === 0) { showToast(t("noText"), "#e11d48"); return; }
     // Text zusammensetzen: neue Zeile, wenn das Wort deutlich tiefer steht
     let text = "";
     let prev = null;
@@ -893,7 +937,7 @@
       if (currentMode !== "off" && sel && !sel.isCollapsed && sel.toString().trim() &&
           !isInputActive(e.target) && !isInputActive(document.activeElement)) {
         rightDownTime = Date.now();
-        rightHoldTimer = setTimeout(() => showToast("Loslassen = Menü", "#10b981"), RIGHT_HOLD_MS);
+        rightHoldTimer = setTimeout(() => showToast(t("releaseMenu"), "#10b981"), RIGHT_HOLD_MS);
       }
     }
 
@@ -966,12 +1010,10 @@
       return;
     }
     if (isInputActive(e.target) || isInputActive(document.activeElement)) return;
-    const key = (e.key || "").toLowerCase();
-
-    // Pfeiltasten im Vollbild: springen immer, auch wenn vorher etwas anderes angeklickt wurde
+    // Spul-Tasten (Standard Pfeile) im Vollbild: springen immer, auch wenn vorher etwas anderes angeklickt wurde
     if (enableWheel && isFullscreenActive() && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey &&
-        (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
-      const delta = stepFor(e.key === "ArrowRight");
+        (keyIs(e, keyBack) || keyIs(e, keyFwd))) {
+      const delta = stepFor(keyIs(e, keyFwd));
       if (seekVideoByDelta(delta)) {
         e.preventDefault();
         e.stopImmediatePropagation();
@@ -983,8 +1025,8 @@
       return;
     }
 
-    // Lautstaerke-Boost (V = naechste Stufe, Shift+V = sofort aus)
-    if (enableAudio && !e.ctrlKey && !e.altKey && !e.metaKey && key === "v") {
+    // Lautstaerke-Boost (Standard V = naechste Stufe, Shift+V = sofort aus)
+    if (enableAudio && !e.ctrlKey && !e.altKey && !e.metaKey && keyIs(e, keyBoost)) {
       if (getActiveMedia()) {
         e.preventDefault();
         e.stopPropagation();

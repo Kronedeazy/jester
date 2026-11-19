@@ -1,8 +1,14 @@
 const translationCache = new Map();
 const MAX_CACHE_SIZE = 250;
 
+const browserLang = () => ((chrome.i18n && chrome.i18n.getUILanguage()) || "en").toLowerCase().startsWith("de") ? "de" : "en";
+const MENU_TITLE = { de: "Markierung vorlesen / übersetzen", en: "Read / translate selection" };
+
 const DEFAULT_SETTINGS = {
   mode: "reader",
+  key_boost: "v",
+  key_back: "ArrowLeft",
+  key_fwd: "ArrowRight",
   rate: 1.35,
   ttsInTranslator: true,
   select_box: true,
@@ -26,8 +32,9 @@ const OLD_KEYS = [
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.remove(OLD_KEYS);
 
-  chrome.storage.local.get(Object.keys(DEFAULT_SETTINGS).concat(["boost_v2"]), (res) => {
+  chrome.storage.local.get(Object.keys(DEFAULT_SETTINGS).concat(["boost_v2", "lang"]), (res) => {
     const updates = {};
+    if (res.lang !== "de" && res.lang !== "en") updates.lang = browserLang();
     for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) {
       if (res[k] === undefined) updates[k] = v;
     }
@@ -36,33 +43,41 @@ chrome.runtime.onInstalled.addListener(() => {
       updates.audio_stages = [3, 6, 9];
       updates.boost_v2 = true;
     }
-    chrome.storage.local.set(updates, () => updateBadge(res.mode || DEFAULT_SETTINGS.mode));
+    chrome.storage.local.set(updates, () => updateBadge(res.mode || DEFAULT_SETTINGS.mode, updates.lang || res.lang));
   });
 
+  chrome.storage.local.get(["lang"], (r) => createMenu(r.lang || browserLang()));
+});
+
+function createMenu(lang) {
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: "process-selection",
-      title: "Markierung vorlesen / übersetzen",
+      title: MENU_TITLE[lang] || MENU_TITLE.en,
       contexts: ["selection"]
     });
   });
-});
+}
 
 chrome.runtime.onStartup.addListener(() => {
-  chrome.storage.local.get(["mode"], (res) => updateBadge(res.mode || "reader"));
+  chrome.storage.local.get(["mode", "lang"], (res) => updateBadge(res.mode || "reader", res.lang));
 });
 
 chrome.storage.onChanged.addListener((changes) => {
-  if (changes.mode) updateBadge(changes.mode.newValue);
+  if (changes.mode || changes.lang) {
+    chrome.storage.local.get(["mode", "lang"], (r) => updateBadge(r.mode || "reader", r.lang));
+  }
+  if (changes.lang) createMenu(changes.lang.newValue);
 });
 
-// Kleines Abzeichen am Symbol: aktueller Lese-Modus.
+// Kleines Abzeichen am Symbol: aktueller Lese-Modus (V/R = vorlesen, DE/EN = uebersetzen).
 // Laeuft in einem Tab der Lautstaerke-Boost, steht dort stattdessen "+6" usw.
-function updateBadge(mode) {
+function updateBadge(mode, lang) {
+  const de = (lang || browserLang()) === "de";
   const map = {
-    reader: { text: "V", color: "#10b981" },
-    translator: { text: "DE", color: "#f4a7b9" },
-    translator_audio: { text: "DE", color: "#a78bfa" },
+    reader: { text: de ? "V" : "R", color: "#10b981" },
+    translator: { text: de ? "DE" : "EN", color: "#f4a7b9" },
+    translator_audio: { text: de ? "DE" : "EN", color: "#a78bfa" },
     off: { text: "", color: "#e11d48" }
   };
   const cfg = map[mode] || map.off;
@@ -98,8 +113,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 // Kurze Texte per GET, lange per POST (sonst wird die Adresse zu lang)
-async function fetchTranslation(text) {
-  const base = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=de&dt=t";
+async function fetchTranslation(text, target) {
+  const tl = target === "en" ? "en" : "de";
+  const base = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=" + tl + "&dt=t";
   const r = text.length < 1500
     ? await fetch(base + "&q=" + encodeURIComponent(text))
     : await fetch(base, {
@@ -126,14 +142,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ error: "Empty text" });
     return false;
   }
-  if (translationCache.has(text)) {
-    sendResponse(Object.assign({ cached: true }, translationCache.get(text)));
+  const target = request.target === "en" ? "en" : "de";
+  const cacheKey = target + "|" + text;
+  if (translationCache.has(cacheKey)) {
+    sendResponse(Object.assign({ cached: true }, translationCache.get(cacheKey)));
     return false;
   }
-  fetchTranslation(text)
+  fetchTranslation(text, target)
     .then((result) => {
       if (translationCache.size >= MAX_CACHE_SIZE) translationCache.delete(translationCache.keys().next().value);
-      translationCache.set(text, result);
+      translationCache.set(cacheKey, result);
       sendResponse(result);
     })
     .catch((err) => sendResponse({ error: err.message }));
