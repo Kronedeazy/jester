@@ -1,0 +1,11 @@
+{
+  "extName": {
+    "message": "Jester"
+  },
+  "extDesc": {
+    "message": "Lautstärke-Boost über 100 %, Vorlesen & Übersetzen per Rahmen-Auswahl und Videos mit dem Mausrad vorspulen."
+  },
+  "cmdCycle": {
+    "message": "Vorlese-/Übersetzungsmodus durchschalten"
+  }
+}
