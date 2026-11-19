@@ -1,0 +1,11 @@
+{
+  "extName": {
+    "message": "Jester"
+  },
+  "extDesc": {
+    "message": "Volume boost beyond 100%, read aloud & translate with a frame selection, and fast-forward videos with the mouse wheel."
+  },
+  "cmdCycle": {
+    "message": "Switch read / translate mode"
+  }
+}
