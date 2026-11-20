@@ -18,9 +18,7 @@ A free, lightweight Chrome extension – no account, no ads, no tracking.
 ### 🟥 Select text with a frame – not half the page
 Hold **left + right mouse button** and drag a **red frame** around any text. Jester takes *only* what's inside and reads it aloud or translates it. No more selections that run into sidebars, ads and menus.
 
-**Works on images too:** no real text inside the frame – a screenshot, a meme, burned-in video subtitles? Jester reads the text *from the picture* (built-in text recognition, runs locally, about 1 second). Click the red text to **pause / continue**, **Esc** stops.
-
-For text from an image, the frame stays on screen as a box while it reads: **left-click** it to dismiss (stops reading), **right-click** for the normal menu to **copy** the text, or **hold and drag** it to drop the recognized text anywhere – just like selected text. The box disappears by itself when reading is done.
+**Works on images too:** no real text inside the frame – a screenshot, a meme, burned-in video subtitles? Jester reads the text *from the picture* (built-in text recognition, runs locally, about 1 second). The red marking behaves **just like a normal selection**: **click anywhere** to clear it (reading stops), **right-click** it for the menu to **copy** the text, **hold and drag** it to drop the text anywhere, **Esc** stops. Switching tabs doesn't interrupt reading. For text from an image the frame stays on screen as a red box. The marking disappears by itself when reading is done.
 
 <img src="docs/frame.png" alt="Red frame selection" width="760">
 
@@ -41,7 +39,7 @@ Press **V** for 3 adjustable boost levels (default +3 / +6 / +9 dB), **Shift+V**
 - Prefer classic selecting? Switch the red frame off and just select with the left mouse button.
 - **Arrow keys ← →** jump in fullscreen, even after you clicked somewhere else on the page.
 - Repeated skips add up on screen: +5s, +10s, +15s … – change direction and the counter starts over.
-- Reading keeps going while you click around the page (play/pause a video, open links); the red marking disappears by itself when it's done.
+- Reading keeps going when you switch tabs; the red marking disappears by itself when it's done.
 - **„D“ button** in the menu: demo mode that explains every feature right where it is – and lets you **change the keys**.
 
 <img src="docs/menu.png" alt="Jester menu" width="360">
@@ -50,8 +48,8 @@ Press **V** for 3 adjustable boost levels (default +3 / +6 / +9 dB), **Shift+V**
 |---|---|
 | **V** / **Shift+V** | Next boost level / boost off |
 | **Left + right mouse, drag** | Red frame: read / translate the text inside (or in the image) |
-| **Click the red text** | Pause / continue reading |
-| **Image box:** left-click / right-click / drag | Dismiss / copy menu / drop the text anywhere |
+| **Click anywhere** | Clear the red marking, stop reading |
+| **Red marking:** right-click / drag | Copy menu / drop the text anywhere |
 | **Mouse wheel on video** | Up = fast-forward, down = jump back |
 | **Right mouse + wheel** | Turbo fast-forward |
 | **Right-click while fast-forwarding** | Stop fast-forwarding |
@@ -98,7 +96,7 @@ Kostenloses Chrome-Add-on – ohne Konto, ohne Werbung, ohne Datensammeln.
 
 ### Die Highlights
 
-- 🟥 **Text per Rahmen auswählen:** Linke + rechte Maustaste halten und ziehen → roter Rahmen. Nur der Text darin wird vorgelesen oder übersetzt – statt die halbe Seite zu markieren. **Auch in Bildern:** Ist im Rahmen kein echter Text (Screenshot, Meme, eingebrannte Untertitel), liest Jester den Text aus dem Bild – lokal auf deinem PC, ca. 1 Sekunde. Klick auf den roten Text = Pause / weiter, Esc = stopp. Bei Text aus einem Bild bleibt der Rahmen als Box stehen: Linksklick = weg, Rechtsklick = Menü zum Kopieren, gedrückt halten und ziehen = Text irgendwo ablegen.
+- 🟥 **Text per Rahmen auswählen:** Linke + rechte Maustaste halten und ziehen → roter Rahmen. Nur der Text darin wird vorgelesen oder übersetzt – statt die halbe Seite zu markieren. **Auch in Bildern:** Ist im Rahmen kein echter Text (Screenshot, Meme, eingebrannte Untertitel), liest Jester den Text aus dem Bild – lokal auf deinem PC, ca. 1 Sekunde. Die rote Markierung verhält sich wie eine normale Markierung: Klick irgendwo = weg und Vorlesen stoppt, Rechtsklick = Menü zum Kopieren, gedrückt halten und ziehen = Text irgendwo ablegen, Esc = stopp. Bei Text aus einem Bild bleibt der Rahmen als rote Box stehen.
 - ⏩ **Mit dem Mausrad vorspulen, ohne etwas zu verpassen:** Rad hoch = das Video läuft kurz schneller, bis die eingestellten Sekunden geschafft sind (5 s bei 5x = 1 s). Rechte Taste halten + Rad = Turbo bis 16x. Rechtsklick während des Vorspulens = sofort stoppen. Rad runter springt zurück.
 - 🔊 **Lauter als 100 %:** Taste **V** für 3 einstellbare Stufen (Standard +3 / +6 / +9 dB), **Shift+V** = aus. Laute Stellen werden gezähmt, leise Stimmen bekommen den vollen Boost, ein Schutz verhindert Kratzen.
 
@@ -109,7 +107,7 @@ Kostenloses Chrome-Add-on – ohne Konto, ohne Werbung, ohne Datensammeln.
 - Oberfläche auf Deutsch und Englisch – per Klick umschaltbar, startet in der Sprache des Browsers.
 - Lieber klassisch markieren? Rahmen ausschalten und normal mit links markieren.
 - Pfeiltasten ← → springen im Vollbild. Mehrere Sprünge werden zusammengezählt (+5s, +10s …), bei Richtungswechsel fängt die Anzeige neu an.
-- Vorlesen läuft weiter, während du auf der Seite klickst (Video, Links); die rote Markierung verschwindet nach dem Vorlesen von selbst.
+- Tab wechseln unterbricht das Vorlesen nicht; die rote Markierung verschwindet nach dem Vorlesen von selbst.
 - **„D“-Knopf** im Menü: Demo-Modus erklärt jede Funktion direkt an Ort und Stelle – und dort lassen sich die **Tasten ändern**.
 
 ### Installation
@@ -130,13 +128,13 @@ Fragen oder Ideen? Einfach ein [Issue](https://github.com/Kronedeazy/jester/issu
 
 **1.1**
 - Red frame on images: reads text from pictures (local text recognition, German & English).
-- Image box stays while reading: left-click = dismiss, right-click = copy, drag = drop the text anywhere.
-- Reading rules for the red frame: click the red text = pause/continue, other clicks keep reading, Esc while dragging cancels, marking disappears when done.
+- The red marking now behaves like a normal selection: click anywhere = clear & stop, right-click = copy, drag = drop the text anywhere; image text shows as a red box.
+- Esc while dragging cancels the frame; switching tabs keeps it reading; the marking disappears when done.
 - Mouse wheel: right-click while fast-forwarding stops it; the counter starts over when you change direction.
 
 **1.0** – first official release. Before going public, Jester went through about 30 internal versions.
 
-*Deutsch:* **1.1** bringt Texterkennung in Bildern, die stehenbleibende Bild-Box (Linksklick = weg, Rechtsklick = kopieren, ziehen = ablegen), neue Vorlese-Regeln für den roten Rahmen und den Rechtsklick-Stopp beim Vorspulen. **1.0** war die erste offizielle Version nach rund 30 internen Versionen.
+*Deutsch:* **1.1** bringt Texterkennung in Bildern, eine rote Markierung, die sich wie eine normale verhält (Klick irgendwo = weg, Rechtsklick = kopieren, ziehen = ablegen), Esc beim Ziehen = abbrechen und den Rechtsklick-Stopp beim Vorspulen. **1.0** war die erste offizielle Version nach rund 30 internen Versionen.
 
 ## How it's made
 

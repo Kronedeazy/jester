@@ -936,6 +936,7 @@
     const last = words[words.length - 1].range;
     span.setEnd(last.endContainer, last.endOffset);
     lastSelText = "";
+    showOcrBox(r, text, false);
     processPickedText(text, span);
   }
 
@@ -955,14 +956,10 @@
       return;
     }
     // Normaler Klick: rote Markierung vom letzten Mal weg
-    if (e.button === 0 && !boxActive) {
-      // Klick auf den rot markierten Text = Pause / weiter
-      if (boxWordRanges.length && pointInBoxWords(e.clientX, e.clientY) && togglePause()) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        return;
-      }
-      if (!isSpeaking) clearBoxHighlight();
+    if (e.button === 0 && !boxActive && (boxWordRanges.length || ocrBoxEl)) {
+      clearBoxHighlight();
+      removeOcrBox();
+      stopAllSpeechAndOverlay();
     }
   }, true);
 
@@ -1018,7 +1015,7 @@
   function inOcrBox(node) {
     return Boolean(ocrBoxEl && node && (node === ocrBoxEl || ocrBoxEl.contains(node.nodeType === 1 ? node : node.parentNode)));
   }
-  function showOcrBox(r, text) {
+  function showOcrBox(r, text, visible = true) {
     removeOcrBox();
     if (!document.getElementById("jester-ocr-style")) {
       const st = document.createElement("style");
@@ -1030,19 +1027,18 @@
     const box = document.createElement("div");
     box.id = "jester-ocr-box";
     box.draggable = true;
-    box.title = text;
     Object.assign(box.style, {
       position: "absolute",
       left: (r.left + window.scrollX) + "px",
       top: (r.top + window.scrollY) + "px",
       width: (r.right - r.left) + "px",
       height: (r.bottom - r.top) + "px",
-      border: "2px solid #e11d48",
-      background: "rgba(225,29,72,0.14)",
+      border: visible ? "2px solid #e11d48" : "none",
+      background: visible ? "rgba(225,29,72,0.14)" : "transparent",
       borderRadius: "4px",
       boxSizing: "border-box",
       zIndex: "2147483646",
-      cursor: "grab",
+      cursor: "default",
       overflow: "hidden"
     });
     // unsichtbarer Text in der Box: damit "Kopieren" im Rechtsklick-Menue erscheint
@@ -1070,6 +1066,7 @@
       e.preventDefault();
       e.stopPropagation();
       removeOcrBox();
+      clearBoxHighlight();
       stopAllSpeechAndOverlay();
     });
     (document.body || document.documentElement).appendChild(box);
@@ -1157,10 +1154,7 @@
     }
 
     // Klick stoppt das Vorlesen (Klick auf die Uebersetzung kopiert sie)
-    if (selectBox) {
-      // Roter Modus: Klick neben die Uebersetzung schliesst nur den Kasten, das Vorlesen laeuft weiter
-      if (e.button === 0 && activeOverlay && !activeOverlay.contains(e.target)) removeOverlay();
-    } else if (activeOverlay && !activeOverlay.contains(e.target)) {
+    if (activeOverlay && !activeOverlay.contains(e.target)) {
       stopAllSpeechAndOverlay();
     } else if (!activeOverlay) {
       isSpeaking = false;
