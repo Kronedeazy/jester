@@ -20,6 +20,8 @@ Hold **left + right mouse button** and drag a **red frame** around any text. Jes
 
 **Works on images too:** no real text inside the frame – a screenshot, a meme, burned-in video subtitles? Jester reads the text *from the picture* (built-in text recognition, runs locally, about 1 second). Click the red text to **pause / continue**, **Esc** stops.
 
+For text from an image, the frame stays on screen as a box while it reads: **left-click** it to dismiss (stops reading), **right-click** for the normal menu to **copy** the text, or **hold and drag** it to drop the recognized text anywhere – just like selected text. The box disappears by itself when reading is done.
+
 <img src="docs/frame.png" alt="Red frame selection" width="760">
 
 ### ⏩ Fast-forward with the mouse wheel – without skipping a thing
@@ -49,6 +51,7 @@ Press **V** for 3 adjustable boost levels (default +3 / +6 / +9 dB), **Shift+V**
 | **V** / **Shift+V** | Next boost level / boost off |
 | **Left + right mouse, drag** | Red frame: read / translate the text inside (or in the image) |
 | **Click the red text** | Pause / continue reading |
+| **Image box:** left-click / right-click / drag | Dismiss / copy menu / drop the text anywhere |
 | **Mouse wheel on video** | Up = fast-forward, down = jump back |
 | **Right mouse + wheel** | Turbo fast-forward |
 | **Right-click while fast-forwarding** | Stop fast-forwarding |
@@ -95,7 +98,7 @@ Kostenloses Chrome-Add-on – ohne Konto, ohne Werbung, ohne Datensammeln.
 
 ### Die Highlights
 
-- 🟥 **Text per Rahmen auswählen:** Linke + rechte Maustaste halten und ziehen → roter Rahmen. Nur der Text darin wird vorgelesen oder übersetzt – statt die halbe Seite zu markieren. **Auch in Bildern:** Ist im Rahmen kein echter Text (Screenshot, Meme, eingebrannte Untertitel), liest Jester den Text aus dem Bild – lokal auf deinem PC, ca. 1 Sekunde. Klick auf den roten Text = Pause / weiter, Esc = stopp.
+- 🟥 **Text per Rahmen auswählen:** Linke + rechte Maustaste halten und ziehen → roter Rahmen. Nur der Text darin wird vorgelesen oder übersetzt – statt die halbe Seite zu markieren. **Auch in Bildern:** Ist im Rahmen kein echter Text (Screenshot, Meme, eingebrannte Untertitel), liest Jester den Text aus dem Bild – lokal auf deinem PC, ca. 1 Sekunde. Klick auf den roten Text = Pause / weiter, Esc = stopp. Bei Text aus einem Bild bleibt der Rahmen als Box stehen: Linksklick = weg, Rechtsklick = Menü zum Kopieren, gedrückt halten und ziehen = Text irgendwo ablegen.
 - ⏩ **Mit dem Mausrad vorspulen, ohne etwas zu verpassen:** Rad hoch = das Video läuft kurz schneller, bis die eingestellten Sekunden geschafft sind (5 s bei 5x = 1 s). Rechte Taste halten + Rad = Turbo bis 16x. Rechtsklick während des Vorspulens = sofort stoppen. Rad runter springt zurück.
 - 🔊 **Lauter als 100 %:** Taste **V** für 3 einstellbare Stufen (Standard +3 / +6 / +9 dB), **Shift+V** = aus. Laute Stellen werden gezähmt, leise Stimmen bekommen den vollen Boost, ein Schutz verhindert Kratzen.
 
@@ -123,11 +126,22 @@ Keine Datensammlung, kein Konto, keine Werbung. Nur beim **Übersetzen** wird de
 
 Fragen oder Ideen? Einfach ein [Issue](https://github.com/Kronedeazy/jester/issues) schreiben.
 
-## Version
+## Versions / Versionen
 
-**1.0 – first official release.** Before going public, Jester went through about 30 internal versions.
+**1.1**
+- Red frame on images: reads text from pictures (local text recognition, German & English).
+- Image box stays while reading: left-click = dismiss, right-click = copy, drag = drop the text anywhere.
+- Reading rules for the red frame: click the red text = pause/continue, other clicks keep reading, Esc while dragging cancels, marking disappears when done.
+- Mouse wheel: right-click while fast-forwarding stops it; the counter starts over when you change direction.
 
-**1.0 – erste offizielle Version.** Vor der Veröffentlichung gab es rund 30 interne Versionen.
+**1.0** – first official release. Before going public, Jester went through about 30 internal versions.
+
+*Deutsch:* **1.1** bringt Texterkennung in Bildern, die stehenbleibende Bild-Box (Linksklick = weg, Rechtsklick = kopieren, ziehen = ablegen), neue Vorlese-Regeln für den roten Rahmen und den Rechtsklick-Stopp beim Vorspulen. **1.0** war die erste offizielle Version nach rund 30 internen Versionen.
+
+## How it's made
+
+Jester is planned and tested by its maintainer and written with the help of **Claude**, Anthropic's AI assistant.
+*Jester wird mit Hilfe von Claude (KI von Anthropic) geschrieben.*
 
 ## License
 

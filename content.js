@@ -650,7 +650,7 @@
 
   function playNextChunk() {
     if (!isSpeaking || speechQueue.length === 0) {
-      if (isSpeaking && !activeOverlay) clearBoxHighlight(); // fertig vorgelesen
+      if (isSpeaking && !activeOverlay) { clearBoxHighlight(); removeOcrBox(); } // fertig vorgelesen
       isSpeaking = false;
       speechPaused = false;
       return;
@@ -720,7 +720,7 @@
       e.stopPropagation();
       navigator.clipboard.writeText(translatedText).then(() => {
         overlay.style.borderColor = "#10b981";
-        setTimeout(() => { removeOverlay(); clearBoxHighlight(); }, 300);
+        setTimeout(() => { removeOverlay(); clearBoxHighlight(); removeOcrBox(); }, 300);
       });
     });
     document.body.appendChild(overlay);
@@ -732,6 +732,7 @@
     if (boxBlockMouseup && !fromMenu) return;
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed) return;
+    if (inOcrBox(sel.anchorNode) && !fromMenu) return;
     const text = sel.toString().trim();
     if (!text || text.length < 2) return;
     processPickedText(text, sel.getRangeAt(0));
@@ -837,6 +838,7 @@
   }
 
   function startBox(x, y) {
+    removeOcrBox();
     boxActive = true;
     boxBlockMouseup = true;
     boxStartX = x;
@@ -946,6 +948,12 @@
       startBox(e.clientX, e.clientY);
       return;
     }
+    // Klick in die Bild-Box: Rechtsklick markiert den Text (-> "Kopieren" im Menue), sonst nichts anderes ausloesen
+    if (inOcrBox(e.target)) {
+      if (e.button === 2) selectOcrText();
+      e.stopImmediatePropagation();
+      return;
+    }
     // Normaler Klick: rote Markierung vom letzten Mal weg
     if (e.button === 0 && !boxActive) {
       // Klick auf den rot markierten Text = Pause / weiter
@@ -986,6 +994,89 @@
     });
   });
 
+  // ===== Bild-Box: der Rahmen, dessen Bild-Text vorgelesen wird, bleibt sichtbar =====
+  // Linksklick = Box weg (Vorlesen stoppt), Rechtsklick = normales Menue mit "Kopieren",
+  // linke Taste halten und ziehen = erkannten Text irgendwo ablegen.
+  let ocrBoxEl = null;
+  let ocrTextEl = null;
+
+  function removeOcrBox() {
+    if (ocrBoxEl) ocrBoxEl.remove();
+    ocrBoxEl = null;
+    ocrTextEl = null;
+  }
+  function selectOcrText() {
+    if (!ocrTextEl) return;
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(ocrTextEl);
+      const s = window.getSelection();
+      s.removeAllRanges();
+      s.addRange(range);
+    } catch (_) {}
+  }
+  function inOcrBox(node) {
+    return Boolean(ocrBoxEl && node && (node === ocrBoxEl || ocrBoxEl.contains(node.nodeType === 1 ? node : node.parentNode)));
+  }
+  function showOcrBox(r, text) {
+    removeOcrBox();
+    if (!document.getElementById("jester-ocr-style")) {
+      const st = document.createElement("style");
+      st.id = "jester-ocr-style";
+      st.textContent = "#jester-ocr-box, #jester-ocr-box *{user-select:text!important;-webkit-user-select:text!important}" +
+        "#jester-ocr-box *::selection{background:transparent!important;color:transparent!important}";
+      (document.head || document.documentElement).appendChild(st);
+    }
+    const box = document.createElement("div");
+    box.id = "jester-ocr-box";
+    box.draggable = true;
+    box.title = text;
+    Object.assign(box.style, {
+      position: "absolute",
+      left: (r.left + window.scrollX) + "px",
+      top: (r.top + window.scrollY) + "px",
+      width: (r.right - r.left) + "px",
+      height: (r.bottom - r.top) + "px",
+      border: "2px solid #e11d48",
+      background: "rgba(225,29,72,0.14)",
+      borderRadius: "4px",
+      boxSizing: "border-box",
+      zIndex: "2147483646",
+      cursor: "grab",
+      overflow: "hidden"
+    });
+    // unsichtbarer Text in der Box: damit "Kopieren" im Rechtsklick-Menue erscheint
+    const inner = document.createElement("div");
+    inner.textContent = text;
+    Object.assign(inner.style, {
+      color: "transparent",
+      fontSize: "12px",
+      lineHeight: "1.2",
+      whiteSpace: "pre-wrap",
+      width: "100%",
+      height: "100%",
+      overflow: "hidden"
+    });
+    box.appendChild(inner);
+    box.addEventListener("dragstart", (e) => {
+      try {
+        e.dataTransfer.setData("text/plain", text);
+        e.dataTransfer.effectAllowed = "copy";
+      } catch (_) {}
+    });
+    // Linksklick ohne Ziehen = Box weg + Vorlesen stoppen
+    box.addEventListener("click", (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      removeOcrBox();
+      stopAllSpeechAndOverlay();
+    });
+    (document.body || document.documentElement).appendChild(box);
+    ocrBoxEl = box;
+    ocrTextEl = inner;
+  }
+
   // Kein Text im Rahmen: Bildschirmfoto vom Rahmen machen und den Text darin erkennen
   async function ocrRect(r) {
     showToast(t("ocrBusy"), "#a78bfa", 20000);
@@ -1005,6 +1096,7 @@
           getBoundingClientRect: () => ({ left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.right - r.left, height: r.bottom - r.top }),
           commonAncestorContainer: document.body
         };
+        showOcrBox(r, text);
         processPickedText(text, fake);
       });
     } catch (_) {
@@ -1090,6 +1182,7 @@
   }, true);
 
   window.addEventListener("contextmenu", (e) => {
+    if (inOcrBox(e.target)) { selectOcrText(); return; } // normales Menue zum Kopieren
     if (boxBlockMouseup || Date.now() < suppressContextMenuUntil) {
       e.preventDefault();
       e.stopPropagation();
@@ -1134,6 +1227,7 @@
     if (e.key === "Escape") {
       if (cancelBox()) { e.preventDefault(); e.stopImmediatePropagation(); return; }
       clearBoxHighlight();
+      removeOcrBox();
       stopAllSpeechAndOverlay();
       return;
     }
