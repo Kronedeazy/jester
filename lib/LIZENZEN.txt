@@ -1,0 +1,3 @@
+Bild-Texterkennung: Tesseract.js 5.1.1 und tesseract.js-core 5.1.1 (Apache License 2.0),
+Sprachdaten deu/eng aus @tesseract.js-data (tessdata, Apache License 2.0).
+Lizenztexte: lib/LICENSE-tesseract.js.md und lib/LICENSE-tesseract.js-core.txt
