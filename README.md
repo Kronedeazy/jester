@@ -18,11 +18,13 @@ A free, lightweight Chrome extension – no account, no ads, no tracking.
 ### 🟥 Select text with a frame – not half the page
 Hold **left + right mouse button** and drag a **red frame** around any text. Jester takes *only* what's inside and reads it aloud or translates it. No more selections that run into sidebars, ads and menus.
 
+**Works on images too:** no real text inside the frame – a screenshot, a meme, burned-in video subtitles? Jester reads the text *from the picture* (built-in text recognition, runs locally, about 1 second). Click the red text to **pause / continue**, **Esc** stops.
+
 <img src="docs/frame.png" alt="Red frame selection" width="760">
 
 ### ⏩ Fast-forward with the mouse wheel – without skipping a thing
 Scroll **up** on a video and it plays briefly at high speed until the set seconds are covered (e.g. 5 s at 5x = 1 s). You still *see* what happens instead of jumping blindly.
-Hold the **right mouse button** while scrolling for turbo speed (up to 16x). Scroll **down** jumps back. Works on almost every site with a video – fullscreen or just with the mouse over the player.
+Hold the **right mouse button** while scrolling for turbo speed (up to 16x). **Right-click while it fast-forwards** to stop right there. Scroll **down** jumps back. Works on almost every site with a video – fullscreen or just with the mouse over the player.
 
 ### 🔊 Volume boost beyond 100 %
 Press **V** for 3 adjustable boost levels (default +3 / +6 / +9 dB), **Shift+V** turns it off. Loud parts (explosions, intros) are tamed automatically while quiet voices get the full boost – and a limiter prevents distortion. The toolbar icon shows the current boost per tab.
@@ -36,7 +38,8 @@ Press **V** for 3 adjustable boost levels (default +3 / +6 / +9 dB), **Shift+V**
 - **English & German** interface – switch with one click, starts in your browser's language.
 - Prefer classic selecting? Switch the red frame off and just select with the left mouse button.
 - **Arrow keys ← →** jump in fullscreen, even after you clicked somewhere else on the page.
-- Repeated skips add up on screen: +5s, +10s, +15s …
+- Repeated skips add up on screen: +5s, +10s, +15s … – change direction and the counter starts over.
+- Reading keeps going while you click around the page (play/pause a video, open links); the red marking disappears by itself when it's done.
 - **„D“ button** in the menu: demo mode that explains every feature right where it is – and lets you **change the keys**.
 
 <img src="docs/menu.png" alt="Jester menu" width="360">
@@ -44,12 +47,14 @@ Press **V** for 3 adjustable boost levels (default +3 / +6 / +9 dB), **Shift+V**
 | Shortcut | Action |
 |---|---|
 | **V** / **Shift+V** | Next boost level / boost off |
-| **Left + right mouse, drag** | Red frame: read / translate the text inside |
+| **Left + right mouse, drag** | Red frame: read / translate the text inside (or in the image) |
+| **Click the red text** | Pause / continue reading |
 | **Mouse wheel on video** | Up = fast-forward, down = jump back |
 | **Right mouse + wheel** | Turbo fast-forward |
+| **Right-click while fast-forwarding** | Stop fast-forwarding |
 | **← →** (fullscreen) | Jump back / forward |
 | **Alt+Shift+S** | Switch read / translate mode |
-| **Esc** | Stop reading |
+| **Esc** | Stop reading (while dragging: cancel the frame) |
 
 > Keys for boost and jumping can be changed in the menu (click **D**).
 
@@ -67,11 +72,13 @@ Made for Chrome; other Chromium browsers (Edge, Brave, Opera, Vivaldi) should wo
 
 - No data collection, no account, no ads, no analytics. Settings stay in your browser.
 - Only when you **translate**, the selected text is sent to Google Translate to fetch the translation.
+- Text recognition in images runs **entirely on your computer** ([Tesseract.js](https://github.com/naptha/tesseract.js), Apache 2.0). To take the picture of the frame, Jester needs permission to capture the visible tab – that's why it asks for access to all websites.
 - Read-aloud uses the voices built into Chrome / your operating system.
 
 ## Limits
 
-- On copy-protected streaming services (Netflix, Prime Video, Disney+) the browser does not allow the volume boost.
+- On copy-protected streaming services (Netflix, Prime Video, Disney+) the browser does not allow the volume boost, and the video picture can't be captured for text recognition.
+- Image text recognition knows German and English.
 
 ## Feedback
 
@@ -88,8 +95,8 @@ Kostenloses Chrome-Add-on – ohne Konto, ohne Werbung, ohne Datensammeln.
 
 ### Die Highlights
 
-- 🟥 **Text per Rahmen auswählen:** Linke + rechte Maustaste halten und ziehen → roter Rahmen. Nur der Text darin wird vorgelesen oder übersetzt – statt die halbe Seite zu markieren.
-- ⏩ **Mit dem Mausrad vorspulen, ohne etwas zu verpassen:** Rad hoch = das Video läuft kurz schneller, bis die eingestellten Sekunden geschafft sind (5 s bei 5x = 1 s). Rechte Taste halten + Rad = Turbo bis 16x. Rad runter springt zurück.
+- 🟥 **Text per Rahmen auswählen:** Linke + rechte Maustaste halten und ziehen → roter Rahmen. Nur der Text darin wird vorgelesen oder übersetzt – statt die halbe Seite zu markieren. **Auch in Bildern:** Ist im Rahmen kein echter Text (Screenshot, Meme, eingebrannte Untertitel), liest Jester den Text aus dem Bild – lokal auf deinem PC, ca. 1 Sekunde. Klick auf den roten Text = Pause / weiter, Esc = stopp.
+- ⏩ **Mit dem Mausrad vorspulen, ohne etwas zu verpassen:** Rad hoch = das Video läuft kurz schneller, bis die eingestellten Sekunden geschafft sind (5 s bei 5x = 1 s). Rechte Taste halten + Rad = Turbo bis 16x. Rechtsklick während des Vorspulens = sofort stoppen. Rad runter springt zurück.
 - 🔊 **Lauter als 100 %:** Taste **V** für 3 einstellbare Stufen (Standard +3 / +6 / +9 dB), **Shift+V** = aus. Laute Stellen werden gezähmt, leise Stimmen bekommen den vollen Boost, ein Schutz verhindert Kratzen.
 
 ### Außerdem
@@ -98,7 +105,8 @@ Kostenloses Chrome-Add-on – ohne Konto, ohne Werbung, ohne Datensammeln.
 - Übersetzen ins Deutsche oder Englische als Kasten über dem Text (Klick = kopieren) oder nur vorgelesen.
 - Oberfläche auf Deutsch und Englisch – per Klick umschaltbar, startet in der Sprache des Browsers.
 - Lieber klassisch markieren? Rahmen ausschalten und normal mit links markieren.
-- Pfeiltasten ← → springen im Vollbild. Mehrere Sprünge werden zusammengezählt (+5s, +10s …).
+- Pfeiltasten ← → springen im Vollbild. Mehrere Sprünge werden zusammengezählt (+5s, +10s …), bei Richtungswechsel fängt die Anzeige neu an.
+- Vorlesen läuft weiter, während du auf der Seite klickst (Video, Links); die rote Markierung verschwindet nach dem Vorlesen von selbst.
 - **„D“-Knopf** im Menü: Demo-Modus erklärt jede Funktion direkt an Ort und Stelle – und dort lassen sich die **Tasten ändern**.
 
 ### Installation
@@ -111,7 +119,7 @@ Kostenloses Chrome-Add-on – ohne Konto, ohne Werbung, ohne Datensammeln.
 
 ### Datenschutz
 
-Keine Datensammlung, kein Konto, keine Werbung. Nur beim **Übersetzen** wird der ausgewählte Text an Google Translate geschickt.
+Keine Datensammlung, kein Konto, keine Werbung. Nur beim **Übersetzen** wird der ausgewählte Text an Google Translate geschickt. Die Texterkennung in Bildern läuft komplett auf deinem PC; für das Foto des Rahmens braucht Jester Zugriff auf alle Webseiten.
 
 Fragen oder Ideen? Einfach ein [Issue](https://github.com/Kronedeazy/jester/issues) schreiben.
 

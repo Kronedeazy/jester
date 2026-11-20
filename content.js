@@ -33,6 +33,7 @@
   let badgeTimer = null;
   let forcedVideo = null;       // Video unter der Maus (Mausrad ohne Vollbild)
   let rightHeld = false;        // rechte Taste auf dem Video gedrueckt
+  let rightStoppedFf = false; // Rechtsklick hat das Vorspulen beendet -> kein Menue
   let rightWheeled = false;     // waehrenddessen gescrollt -> kein Rechtsklick-Menue
 
   // Rechtsklick auf Markierung (nur im Modus "normal markieren"): kurz = abwaehlen, halten = Menue
@@ -51,18 +52,28 @@
       volOff: "🔈 Lautstärke: Original",
       level: "Stufe",
       transFail: "Übersetzung fehlgeschlagen",
-      noText: "Kein Text im Rahmen",
+      noText: "Kein Text gefunden",
       releaseMenu: "Loslassen = Menü",
-      copyTitle: "Klicken zum Kopieren der Übersetzung"
+      copyTitle: "Klicken zum Kopieren der Übersetzung",
+      ocrBusy: "🔎 Lese Text aus dem Bild…",
+      ocrFail: "Bild-Texterkennung fehlgeschlagen",
+      pause: "⏸ Pause – nochmal auf den roten Text klicken = weiter",
+      resume: "▶ Weiter",
+      ffStop: "▶ Normal weiter"
     },
     en: {
       protected: "Volume: protected here – not possible",
       volOff: "🔈 Volume: original",
       level: "Level",
       transFail: "Translation failed",
-      noText: "No text in frame",
+      noText: "No text found",
       releaseMenu: "Release = menu",
-      copyTitle: "Click to copy the translation"
+      copyTitle: "Click to copy the translation",
+      ocrBusy: "🔎 Reading text from the image…",
+      ocrFail: "Image text recognition failed",
+      pause: "⏸ Paused – click the red text again to continue",
+      resume: "▶ Continue",
+      ffStop: "▶ Normal speed"
     }
   };
   const t = (k) => (TXT[lang] || TXT.en)[k];
@@ -380,6 +391,17 @@
   const SEEK_STACK_MS = 1200;
   let seekStackSum = 0;
   let seekStackAt = 0;
+  // Beim und bis 2 s nach dem Vorspulen: gleiche Richtung zaehlt weiter, Gegenrichtung faengt neu an
+  const FF_AFTER_MS = 2000;
+  let ffEndAt = 0;
+  function stackAdd(deltaSeconds, now, keep) {
+    const windowMs = (ffActive || now - ffEndAt < FF_AFTER_MS) ? FF_AFTER_MS : SEEK_STACK_MS;
+    const expired = !keep && now - seekStackAt > windowMs;
+    const turned = seekStackSum !== 0 && Math.sign(deltaSeconds) !== Math.sign(seekStackSum);
+    if (expired || turned) seekStackSum = 0;
+    seekStackSum = Math.round((seekStackSum + deltaSeconds) * 10) / 10;
+    seekStackAt = now;
+  }
 
   // Springen (Pfeiltasten und Rad runter)
   function seekVideoByDelta(deltaSeconds) {
@@ -395,9 +417,7 @@
     }
     video.currentTime = targetSec;
 
-    if (now - seekStackAt > SEEK_STACK_MS) seekStackSum = 0;
-    seekStackSum = Math.round((seekStackSum + deltaSeconds) * 10) / 10;
-    seekStackAt = now;
+    stackAdd(deltaSeconds, now, false);
     const total = seekStackSum;
     const label = (total > 0 ? "+" : total < 0 ? "−" : "±") + Math.abs(total) + "s";
     showToast(label, total >= 0 ? "#10b981" : "#a78bfa", SEEK_STACK_MS);
@@ -430,7 +450,8 @@
     ffTimer = null;
     try { if (ffVideo) ffVideo.playbackRate = ffPrevRate; } catch (_) {}
     ffVideo = null;
-    seekStackAt = Date.now(); // ein Zurueck kurz danach wird in der Anzeige verrechnet
+    ffEndAt = Date.now();
+    seekStackAt = ffEndAt;
     return true;
   }
 
@@ -456,9 +477,7 @@
     }
     ffCurRate = rate;
     try { video.playbackRate = rate; } catch (_) {}
-    if (!wasActive && now - seekStackAt > SEEK_STACK_MS) seekStackSum = 0;
-    seekStackSum = Math.round((seekStackSum + deltaSeconds) * 10) / 10;
-    seekStackAt = now;
+    stackAdd(deltaSeconds, now, wasActive);
     const restMs = Math.max(0, (ffTarget - video.currentTime) / rate * 1000);
     showToast("⏩ +" + seekStackSum + "s · " + fmtNum(rate) + "x", fast ? "#f59e0b" : "#10b981", restMs + 400);
     return true;
@@ -623,6 +642,7 @@
 
   function speakText(text, forcedLang = null) {
     window.speechSynthesis.cancel();
+    speechPaused = false;
     speechQueue = chunkTextByLangAndLength(text, forcedLang);
     isSpeaking = true;
     playNextChunk();
@@ -630,7 +650,9 @@
 
   function playNextChunk() {
     if (!isSpeaking || speechQueue.length === 0) {
+      if (isSpeaking && !activeOverlay) clearBoxHighlight(); // fertig vorgelesen
       isSpeaking = false;
+      speechPaused = false;
       return;
     }
     const chunk = speechQueue.shift();
@@ -653,6 +675,7 @@
 
   function stopAllSpeechAndOverlay() {
     isSpeaking = false;
+    speechPaused = false;
     speechQueue = [];
     window.speechSynthesis.cancel();
     removeOverlay();
@@ -697,7 +720,7 @@
       e.stopPropagation();
       navigator.clipboard.writeText(translatedText).then(() => {
         overlay.style.borderColor = "#10b981";
-        setTimeout(() => removeOverlay(), 300);
+        setTimeout(() => { removeOverlay(); clearBoxHighlight(); }, 300);
       });
     });
     document.body.appendChild(overlay);
@@ -772,8 +795,36 @@
   let boxBlockMouseup = false;
   let boxUserSelectOld = "";
   const BOX_HL = "jester-box";
+  let boxWordRanges = [];    // rot markierte Woerter (fuer "Klick auf den roten Text")
+  let speechPaused = false;
+
+  function pointInBoxWords(x, y) {
+    for (const r of boxWordRanges) {
+      for (const b of r.getClientRects()) {
+        if (x >= b.left - 2 && x <= b.right + 2 && y >= b.top - 2 && y <= b.bottom + 2) return true;
+      }
+    }
+    return false;
+  }
+  function togglePause() {
+    const s = window.speechSynthesis;
+    if (!isSpeaking) return false;
+    if (speechPaused) { s.resume(); speechPaused = false; showToast(t("resume"), "#10b981"); }
+    else { s.pause(); speechPaused = true; showToast(t("pause"), "#a78bfa", 2500); }
+    return true;
+  }
+  // Rahmen abbrechen (Esc waehrend des Ziehens)
+  function cancelBox() {
+    if (!boxActive) return false;
+    boxActive = false;
+    document.documentElement.style.userSelect = boxUserSelectOld;
+    if (boxEl) { boxEl.remove(); boxEl = null; }
+    suppressContextMenuUntil = Date.now() + 800;
+    return true;
+  }
 
   function clearBoxHighlight() {
+    boxWordRanges = [];
     try { if (window.CSS && CSS.highlights) CSS.highlights.delete(BOX_HL); } catch (_) {}
   }
 
@@ -860,7 +911,7 @@
     if (boxEl) { boxEl.remove(); boxEl = null; }
     if (r.right - r.left < 6 || r.bottom - r.top < 6) return;
     const words = collectBoxWords(r);
-    if (words.length === 0) { showToast(t("noText"), "#e11d48"); return; }
+    if (words.length === 0) { ocrRect(r); return; }
     // Text zusammensetzen: neue Zeile, wenn das Wort deutlich tiefer steht
     let text = "";
     let prev = null;
@@ -875,6 +926,7 @@
       if (window.CSS && CSS.highlights && window.Highlight) {
         ensureBoxStyle();
         CSS.highlights.set(BOX_HL, new Highlight(...words.map((w) => w.range)));
+        boxWordRanges = words.map((w) => w.range);
       }
     } catch (_) {}
     const span = document.createRange();
@@ -895,8 +947,70 @@
       return;
     }
     // Normaler Klick: rote Markierung vom letzten Mal weg
-    if (e.button === 0 && !boxActive) clearBoxHighlight();
+    if (e.button === 0 && !boxActive) {
+      // Klick auf den rot markierten Text = Pause / weiter
+      if (boxWordRanges.length && pointInBoxWords(e.clientX, e.clientY) && togglePause()) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return;
+      }
+      if (!isSpeaking) clearBoxHighlight();
+    }
   }, true);
+
+  // Position dieses Fensters auf dem Bildschirm (eingebettete Player liegen in iframes)
+  function getFrameOffset() {
+    if (window === window.top) return Promise.resolve({ x: 0, y: 0 });
+    return new Promise((resolve) => {
+      const id = Math.random().toString(36).slice(2);
+      const done = (v) => { window.removeEventListener("message", onMsg); clearTimeout(timer); resolve(v); };
+      const onMsg = (e) => {
+        if (e.data && e.data.jesterFrameRectFor === id) done({ x: Number(e.data.x) || 0, y: Number(e.data.y) || 0 });
+      };
+      const timer = setTimeout(() => done({ x: 0, y: 0 }), 800);
+      window.addEventListener("message", onMsg);
+      try { window.parent.postMessage({ jesterCmd: "FRAME_RECT_REQ", id }, "*"); } catch (_) { done({ x: 0, y: 0 }); }
+    });
+  }
+  window.addEventListener("message", (event) => {
+    const d = event.data;
+    if (!d || d.jesterCmd !== "FRAME_RECT_REQ" || typeof d.id !== "string") return;
+    const f = Array.from(document.querySelectorAll("iframe, frame")).find((x) => x.contentWindow === event.source);
+    if (!f) return;
+    const b = f.getBoundingClientRect();
+    const cs = getComputedStyle(f);
+    const x = b.left + (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.paddingLeft) || 0);
+    const y = b.top + (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.paddingTop) || 0);
+    getFrameOffset().then((o) => {
+      try { event.source.postMessage({ jesterFrameRectFor: d.id, x: x + o.x, y: y + o.y }, "*"); } catch (_) {}
+    });
+  });
+
+  // Kein Text im Rahmen: Bildschirmfoto vom Rahmen machen und den Text darin erkennen
+  async function ocrRect(r) {
+    showToast(t("ocrBusy"), "#a78bfa", 20000);
+    // zwei Bilder abwarten, damit der rote Rahmen nicht mit fotografiert wird
+    await new Promise((res) => { requestAnimationFrame(() => requestAnimationFrame(res)); setTimeout(res, 120); });
+    const off = await getFrameOffset();
+    const rect = { x: r.left + off.x, y: r.top + off.y, w: r.right - r.left, h: r.bottom - r.top };
+    try {
+      chrome.runtime.sendMessage({ action: "ocr", rect, dpr: window.devicePixelRatio || 1 }, (resp) => {
+        if (chrome.runtime.lastError || !resp || resp.error) { showToast(t("ocrFail"), "#e11d48"); return; }
+        const text = String(resp.text || "").replace(/[ \t]+/g, " ").replace(/\n{2,}/g, "\n").trim();
+        if (text.replace(/[^\p{L}\p{N}]/gu, "").length < 2) { showToast(t("noText"), "#e11d48"); return; }
+        if (activeBadge) activeBadge.style.opacity = "0";
+        lastSelText = "";
+        // Fuer die Uebersetzungs-Einblendung: Position des Rahmens
+        const fake = {
+          getBoundingClientRect: () => ({ left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.right - r.left, height: r.bottom - r.top }),
+          commonAncestorContainer: document.body
+        };
+        processPickedText(text, fake);
+      });
+    } catch (_) {
+      showToast(t("ocrFail"), "#e11d48");
+    }
+  }
 
   window.addEventListener("mousemove", (e) => {
     if (!boxActive) return;
@@ -927,6 +1041,15 @@
     if (e.button === 2 && enableWheel && (isFullscreenActive() || videoUnderPointer(e.clientX, e.clientY))) {
       rightHeld = true;
       rightWheeled = false;
+      rightStoppedFf = false;
+      // Laeuft gerade das Vorspulen: sofort an der aktuellen Stelle normal weiterlaufen lassen
+      if (ffActive) {
+        stopFastForward();
+        rightStoppedFf = true;
+        showToast(t("ffStop"), "#a78bfa");
+        e.preventDefault();
+        e.stopPropagation();
+      }
     }
 
     // Modus "normal markieren": Rechtsklick auf Markierung kurz = Markierung weg, halten = normales Menue
@@ -942,7 +1065,10 @@
     }
 
     // Klick stoppt das Vorlesen (Klick auf die Uebersetzung kopiert sie)
-    if (activeOverlay && !activeOverlay.contains(e.target)) {
+    if (selectBox) {
+      // Roter Modus: Klick neben die Uebersetzung schliesst nur den Kasten, das Vorlesen laeuft weiter
+      if (e.button === 0 && activeOverlay && !activeOverlay.contains(e.target)) removeOverlay();
+    } else if (activeOverlay && !activeOverlay.contains(e.target)) {
       stopAllSpeechAndOverlay();
     } else if (!activeOverlay) {
       isSpeaking = false;
@@ -954,12 +1080,13 @@
   window.addEventListener("mouseup", (e) => {
     if (e.button !== 2 || !rightHeld) return;
     rightHeld = false;
-    if (rightWheeled) {
+    if (rightWheeled || rightStoppedFf) {
       suppressContextMenuUntil = Date.now() + 800; // nach "halten + scrollen" kein Rechtsklick-Menue
       e.preventDefault();
       e.stopPropagation();
     }
     rightWheeled = false;
+    rightStoppedFf = false;
   }, true);
 
   window.addEventListener("contextmenu", (e) => {
@@ -1005,6 +1132,7 @@
 
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
+      if (cancelBox()) { e.preventDefault(); e.stopImmediatePropagation(); return; }
       clearBoxHighlight();
       stopAllSpeechAndOverlay();
       return;

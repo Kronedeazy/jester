@@ -5,10 +5,11 @@
   "description": "__MSG_extDesc__",
   "permissions": [
     "storage",
-    "contextMenus"
+    "contextMenus",
+    "offscreen"
   ],
   "host_permissions": [
-    "https://translate.googleapis.com/*"
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js"
@@ -54,5 +55,8 @@
       "world": "MAIN"
     }
   ],
-  "default_locale": "en"
+  "default_locale": "en",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
 }

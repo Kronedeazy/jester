@@ -131,7 +131,33 @@ async function fetchTranslation(text, target) {
   };
 }
 
+// Texterkennung laeuft in einem unsichtbaren Zusatz-Dokument (dort duerfen Worker + WebAssembly laufen)
+async function ensureOcrDocument() {
+  if (chrome.runtime.getContexts) {
+    const ctx = await chrome.runtime.getContexts({ contextTypes: ["OFFSCREEN_DOCUMENT"] });
+    if (ctx.length) return;
+  }
+  try {
+    await chrome.offscreen.createDocument({ url: "ocr.html", reasons: ["WORKERS"], justification: "Text recognition in the selected screen area" });
+  } catch (e) {
+    if (!String(e && e.message).toLowerCase().includes("single offscreen")) throw e;
+  }
+}
+
+async function runOcr(request, sender) {
+  const windowId = sender.tab ? sender.tab.windowId : undefined;
+  const dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: "png" });
+  await ensureOcrDocument();
+  const res = await chrome.runtime.sendMessage({ target: "ocr", dataUrl, rect: request.rect, dpr: request.dpr });
+  return res || { error: "no result" };
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request && request.target === "ocr") return false; // ist fuer das Offscreen-Dokument
+  if (request.action === "ocr") {
+    runOcr(request, sender).then(sendResponse, (e) => sendResponse({ error: String((e && e.message) || e) }));
+    return true;
+  }
   if (request.action === "audioBadge") {
     if (sender.tab && sender.tab.id !== undefined) setTabBoostBadge(sender.tab.id, Number(request.db) || 0);
     return false;
