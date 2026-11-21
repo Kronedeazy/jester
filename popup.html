@@ -285,6 +285,20 @@
       </div>
       <input type="range" id="rate-slider" min="0.80" max="2.20" step="0.05" value="1.35">
       <div class="row">
+        <span class="sub-label" data-i18n="azVoice"></span>
+        <label class="switch">
+          <input type="checkbox" id="azure-on">
+          <span class="slider teal"></span>
+        </label>
+      </div>
+      <div id="azure-box">
+        <div class="row"><span class="sub-label" data-i18n="azKeyLabel"></span><input type="password" id="azure-key" autocomplete="off" spellcheck="false" style="flex:1;margin-left:8px;min-width:0;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:4px 6px;font-size:12px"></div>
+        <div class="row"><span class="sub-label" data-i18n="azRegion"></span><select id="azure-region" style="margin-left:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:3px 4px;font-size:12px">
+          <option value="germanywestcentral">Germany West Central</option><option value="swedencentral">Sweden Central</option><option value="westeurope">West Europe</option><option value="northeurope">North Europe</option><option value="francecentral">France Central</option><option value="switzerlandnorth">Switzerland North</option><option value="uksouth">UK South</option><option value="eastus">East US</option><option value="westus2">West US 2</option></select>
+          <button id="azure-test" class="pill-btn" style="margin-left:auto" data-i18n="azTest"></button></div>
+      </div>
+      <div id="azure-info" style="font-size:11px;line-height:1.45;color:#a1a1aa;margin:2px 0 8px"></div>
+      <div class="row">
         <span class="sub-label" data-i18n="ttsOverlay"></span>
         <label class="switch">
           <input type="checkbox" id="tts-translator" checked>

@@ -49,7 +49,23 @@ document.addEventListener("DOMContentLoaded", () => {
       footerKeys: "<strong>{K}</strong> Lautstärke &bull; <strong>Alt+Shift+S</strong> Lesemodus",
       toasts: "Hinweise",
       explainToasts: "<b>Hinweise</b>: So lange bleiben die kleinen Meldungen oben rechts im Video sichtbar (z.&nbsp;B. &bdquo;+5s&ldquo; oder &bdquo;Stufe 2&ldquo;).",
-      space: "Leertaste"
+      space: "Leertaste",
+      azVoice: "Microsoft-Stimme (optional)",
+      azKeyLabel: "Schlüssel",
+      azKeyPh: "aus dem Azure-Portal einfügen",
+      azRegion: "Region",
+      azTest: "Testen",
+      azOff: "Natürlichere Vorlese-Stimme (Seraphina). Kostenlos bis 500.000 Zeichen im Monat, braucht ein Microsoft-Azure-Konto. <a href=\"https://github.com/Kronedeazy/jester#microsoft-voice-optional\" target=\"_blank\">Anleitung</a>",
+      azNoKey: "Noch kein Schlüssel – es liest die normale Stimme. <a href=\"https://github.com/Kronedeazy/jester#microsoft-voice-optional\" target=\"_blank\">Anleitung (ca. 10 Min.)</a>",
+      azUsage: "Diesen Monat: <b>{N}</b> von 500.000 Zeichen frei. Danach (oder ohne Internet) liest die normale Stimme. Der markierte Text geht dabei an Microsoft.",
+      azNeedKey: "<b>Erst den Schlüssel einfügen.</b>",
+      azTesting: "Teste &hellip;",
+      azBadKey: "<b>Schlüssel oder Region passt nicht.</b>",
+      azQuota: "<b>Kontingent aufgebraucht oder gesperrt.</b>",
+      azErr: "<b>Fehler {N}</b>",
+      azOk: "<b style='color:#10b981'>Klappt!</b>",
+      azNoNet: "<b>Keine Verbindung.</b>",
+      azSample: "Hallo, ich bin Jester. So klinge ich mit der Microsoft-Stimme."
     },
     en: {
       tagline: "Volume • Read aloud • Video scrubbing",
@@ -95,7 +111,23 @@ document.addEventListener("DOMContentLoaded", () => {
       footerKeys: "<strong>{K}</strong> Volume &bull; <strong>Alt+Shift+S</strong> Read mode",
       toasts: "Hints",
       explainToasts: "<b>Hints</b>: How long the small messages stay visible at the top right of the video (e.g. &bdquo;+5s&ldquo; or &bdquo;Level 2&ldquo;).",
-      space: "Space"
+      space: "Space",
+      azVoice: "Microsoft voice (optional)",
+      azKeyLabel: "Key",
+      azKeyPh: "paste from the Azure portal",
+      azRegion: "Region",
+      azTest: "Test",
+      azOff: "More natural reading voice (Ava). Free up to 500,000 characters a month, needs a Microsoft Azure account. <a href=\"https://github.com/Kronedeazy/jester#microsoft-voice-optional\" target=\"_blank\">Guide</a>",
+      azNoKey: "No key yet – the normal voice reads. <a href=\"https://github.com/Kronedeazy/jester#microsoft-voice-optional\" target=\"_blank\">Guide (about 10 min)</a>",
+      azUsage: "This month: <b>{N}</b> of 500,000 free characters used. After that (or offline) the normal voice reads. The selected text is sent to Microsoft.",
+      azNeedKey: "<b>Paste the key first.</b>",
+      azTesting: "Testing &hellip;",
+      azBadKey: "<b>Key or region doesn't match.</b>",
+      azQuota: "<b>Quota used up or blocked.</b>",
+      azErr: "<b>Error {N}</b>",
+      azOk: "<b style='color:#10b981'>Works!</b>",
+      azNoNet: "<b>No connection.</b>",
+      azSample: "Hi, I'm Jester. This is how I sound with the Microsoft voice."
     }
   };
 
@@ -129,7 +161,52 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!b.classList.contains("listening")) b.textContent = keyName(keys[b.dataset.key]);
     });
     updateFfHint();
+    try { azRender(); } catch (e) {}
   }
+
+  // === Microsoft-Stimme (optional) ===
+  const azOn = $("azure-on"), azKey = $("azure-key"), azRegion = $("azure-region"), azInfo = $("azure-info");
+  const AZ_VOICES = { de: "de-DE-SeraphinaMultilingualNeural", en: "en-US-AvaMultilingualNeural" };
+  let azUsage = 0, azMsg = "";
+  function azRender(msg) {
+    if (msg !== undefined) azMsg = msg;
+    azKey.placeholder = S("azKeyPh");
+    $("azure-box").style.display = azOn.checked ? "" : "none";
+    const num = azUsage.toLocaleString(lang === "de" ? "de-DE" : "en-US");
+    const base = !azOn.checked ? S("azOff") : azKey.value.trim() ? S("azUsage").replace("{N}", num) : S("azNoKey");
+    azInfo.innerHTML = (azMsg ? azMsg + "<br>" : "") + base;
+  }
+  azOn.addEventListener("change", () => { store({ azure_on: azOn.checked }); azRender(""); });
+  azKey.addEventListener("change", () => { store({ azure_key: azKey.value.trim() }); azRender(""); });
+  azRegion.addEventListener("change", () => store({ azure_region: azRegion.value }));
+  $("azure-test").addEventListener("click", async () => {
+    const key = azKey.value.trim();
+    if (!key) { azRender(S("azNeedKey")); return; }
+    store({ azure_key: key, azure_region: azRegion.value });
+    azRender(S("azTesting"));
+    const want = Number($("rate-slider").value) || 1.35;
+    const rate = Math.min(2, Math.max(0.5, want));
+    const pct = Math.round((rate - 1) * 100);
+    const ssml = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="' + (lang === "de" ? "de-DE" : "en-US") + '"><voice name="' + AZ_VOICES[lang] + '"><prosody rate="' + (pct >= 0 ? "+" : "") + pct + '%">' + S("azSample") + '</prosody></voice></speak>';
+    try {
+      const r = await fetch("https://" + azRegion.value + ".tts.speech.microsoft.com/cognitiveservices/v1", {
+        method: "POST",
+        headers: { "Ocp-Apim-Subscription-Key": key, "Content-Type": "application/ssml+xml", "X-Microsoft-OutputFormat": "audio-24khz-96kbitrate-mono-mp3" },
+        body: ssml
+      });
+      if (!r.ok) {
+        azRender(r.status === 401 ? S("azBadKey") : r.status === 429 || r.status === 403 ? S("azQuota") : S("azErr").replace("{N}", r.status));
+        return;
+      }
+      const a = new Audio(URL.createObjectURL(await r.blob()));
+      a.preservesPitch = true;
+      a.playbackRate = Math.max(1, want / rate);
+      a.play();
+      azRender(S("azOk"));
+    } catch (e) {
+      azRender(S("azNoNet"));
+    }
+  });
 
   // === Demo-Modus (D) ===
   $("demo-btn").addEventListener("click", () => document.body.classList.toggle("demo"));
@@ -233,6 +310,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   chrome.storage.local.get(null, (res) => {
     if (res.lang === "de" || res.lang === "en") lang = res.lang;
+    azOn.checked = res.azure_on === true;
+    azKey.value = res.azure_key || "";
+    azRegion.value = res.azure_region || "germanywestcentral";
+    const month = new Date().toISOString().slice(0, 7);
+    azUsage = res.azure_usage && res.azure_usage.month === month ? res.azure_usage.chars : 0;
     for (const f of Object.keys(DEF_KEYS)) if (res[f]) keys[f] = res[f];
 
     enableAudio.checked = pick(res.enable_audio, true);

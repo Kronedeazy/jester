@@ -138,7 +138,7 @@ async function ensureOcrDocument() {
     if (ctx.length) return;
   }
   try {
-    await chrome.offscreen.createDocument({ url: "ocr.html", reasons: ["WORKERS"], justification: "Text recognition in the selected screen area" });
+    await chrome.offscreen.createDocument({ url: "ocr.html", reasons: ["WORKERS", "AUDIO_PLAYBACK"], justification: "Text recognition in the selected screen area and playing the Microsoft voice" });
   } catch (e) {
     if (!String(e && e.message).toLowerCase().includes("single offscreen")) throw e;
   }
@@ -152,8 +152,79 @@ async function runOcr(request, sender) {
   return res || { error: "no result" };
 }
 
+// === Microsoft-Stimme (Azure) ===
+// Beide Stimmen sind "Multilingual": sie lesen auch die jeweils andere Sprache sauber
+const AZURE_VOICES = { de: "de-DE-SeraphinaMultilingualNeural", en: "en-US-AvaMultilingualNeural" };
+let ttsTab = null; // Tab, in dem gerade die Microsoft-Stimme liest
+
+async function hasOffscreen() {
+  if (!chrome.runtime.getContexts) return true;
+  const ctx = await chrome.runtime.getContexts({ contextTypes: ["OFFSCREEN_DOCUMENT"] });
+  return ctx.length > 0;
+}
+
+async function azureSpeak(request, sender) {
+  const cfg = await chrome.storage.local.get(["azure_key", "azure_region", "lang"]);
+  if (!cfg.azure_key) return { ok: false, error: "kein Schluessel" };
+  const uiLang = cfg.lang || (chrome.i18n.getUILanguage().toLowerCase().startsWith("de") ? "de" : "en");
+  await ensureOcrDocument();
+  ttsTab = sender.tab ? sender.tab.id : null;
+  return chrome.runtime.sendMessage({
+    target: "tts", cmd: "speak", id: request.id, chunks: request.chunks, rate: Number(request.rate) || 1,
+    key: cfg.azure_key, region: cfg.azure_region || "germanywestcentral", voice: AZURE_VOICES[uiLang] || AZURE_VOICES.en,
+    tabId: ttsTab, frameId: sender.frameId || 0
+  });
+}
+
+async function azureSend(msg) {
+  if (!(await hasOffscreen())) return;
+  chrome.runtime.sendMessage(Object.assign({ target: "tts" }, msg), () => void chrome.runtime.lastError);
+}
+
+// Zeichen pro Monat mitzaehlen (das kostenlose Kontingent sind 500.000 im Monat)
+async function countAzureChars(n) {
+  const month = new Date().toISOString().slice(0, 7);
+  const { azure_usage } = await chrome.storage.local.get("azure_usage");
+  const u = azure_usage && azure_usage.month === month ? azure_usage : { month, chars: 0 };
+  u.chars += n;
+  await chrome.storage.local.set({ azure_usage: u });
+}
+
+// Tab zu oder neue Seite: Microsoft-Stimme verstummt
+chrome.tabs.onRemoved.addListener((tabId) => { if (tabId === ttsTab) { azureSend({ cmd: "stop", tabId }); ttsTab = null; } });
+chrome.tabs.onUpdated.addListener((tabId, info) => { if (tabId === ttsTab && info.status === "loading") { azureSend({ cmd: "stop", tabId }); ttsTab = null; } });
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request && request.target === "ocr") return false; // ist fuer das Offscreen-Dokument
+  if (request && (request.target === "ocr" || request.target === "tts")) return false; // ist fuer das Offscreen-Dokument
+  if (request.action === "azureSpeak") {
+    azureSpeak(request, sender).then((r) => sendResponse(r || { ok: false }), (e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+  if (request.action === "azureWarm") {
+    (async () => {
+      const cfg = await chrome.storage.local.get(["azure_key", "azure_region"]);
+      if (!cfg.azure_key) return;
+      await ensureOcrDocument();
+      azureSend({ cmd: "warm", region: cfg.azure_region || "germanywestcentral" });
+    })().catch(() => {});
+    return false;
+  }
+  if (request.action === "azureStop") {
+    azureSend({ cmd: "stop", id: request.id });
+    return false;
+  }
+  if (request.action === "azureRate") {
+    azureSend({ cmd: "rate", id: request.id, rate: request.rate });
+    return false;
+  }
+  if (request.action === "ttsEvent") {
+    if (request.type === "chunk" && request.chars) countAzureChars(request.chars);
+    if (request.type === "done" || request.type === "fail") ttsTab = null;
+    if (request.tabId !== null && request.tabId !== undefined) {
+      chrome.tabs.sendMessage(request.tabId, request, { frameId: request.frameId || 0 }, () => void chrome.runtime.lastError);
+    }
+    return false;
+  }
   if (request.action === "ocr") {
     runOcr(request, sender).then(sendResponse, (e) => sendResponse({ error: String((e && e.message) || e) }));
     return true;

@@ -59,7 +59,9 @@
       ocrFail: "Bild-Texterkennung fehlgeschlagen",
       pause: "⏸ Pause – nochmal auf den roten Text klicken = weiter",
       resume: "▶ Weiter",
-      ffStop: "▶ Normal weiter"
+      ffStop: "▶ Normal weiter",
+      azKey: "Microsoft-Schlüssel stimmt nicht – normale Stimme liest",
+      azFail: "Microsoft-Stimme gerade nicht da – normale Stimme liest weiter"
     },
     en: {
       protected: "Volume: protected here – not possible",
@@ -73,7 +75,9 @@
       ocrFail: "Image text recognition failed",
       pause: "⏸ Paused – click the red text again to continue",
       resume: "▶ Continue",
-      ffStop: "▶ Normal speed"
+      ffStop: "▶ Normal speed",
+      azKey: "Microsoft key doesn't work – using the normal voice",
+      azFail: "Microsoft voice unavailable – normal voice continues"
     }
   };
   const t = (k) => (TXT[lang] || TXT.en)[k];
@@ -93,6 +97,8 @@
     if (res.key_back) keyBack = res.key_back;
     if (res.key_fwd) keyFwd = res.key_fwd;
     if (res.rate !== undefined) speechRate = Number(res.rate);
+    azureKeySet = !!res.azure_key;
+    azureSwitch = res.azure_on === true;
     if (res.ttsInTranslator !== undefined) ttsInTranslator = res.ttsInTranslator;
     if (res.select_box !== undefined) selectBox = res.select_box;
     if (res.enable_wheel !== undefined) enableWheel = res.enable_wheel;
@@ -113,7 +119,12 @@
     if (changes.key_boost) keyBoost = changes.key_boost.newValue || "v";
     if (changes.key_back) keyBack = changes.key_back.newValue || "ArrowLeft";
     if (changes.key_fwd) keyFwd = changes.key_fwd.newValue || "ArrowRight";
-    if (changes.rate) speechRate = Number(changes.rate.newValue);
+    if (changes.rate) {
+      speechRate = Number(changes.rate.newValue);
+      if (azureJob) chrome.runtime.sendMessage({ action: "azureRate", id: azureJob.id, rate: speechRate }, () => void chrome.runtime.lastError);
+    }
+    if (changes.azure_key) { azureKeySet = !!changes.azure_key.newValue; azureBlockedUntil = 0; }
+    if (changes.azure_on) { azureSwitch = changes.azure_on.newValue === true; azureBlockedUntil = 0; }
     if (changes.ttsInTranslator) ttsInTranslator = changes.ttsInTranslator.newValue;
     if (changes.select_box) selectBox = changes.select_box.newValue;
     if (changes.enable_wheel) enableWheel = changes.enable_wheel.newValue;
@@ -136,6 +147,7 @@
 
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.action === "triggerSelection") handleSelection(true);
+    if (msg.action === "ttsEvent") onAzureEvent(msg);
   });
 
   // ===================== Hilfsfunktionen =====================
@@ -563,11 +575,16 @@
     return nonLatin.has(langA) !== nonLatin.has(langB) || (nonLatin.has(langA) && langA !== langB);
   }
 
-  // Laengenlimit pro Vorlese-Stueck: lokale Windows-Stimmen lesen lange Stuecke,
-  // Google-Online-Stimmen brechen nach ca. 15 s ab. Geteilt wird nur an Satz-/Satzzeichengrenzen.
-  function maxChunkLength(lang) {
+  // Laenge pro Vorlese-Stueck: lokale Stimmen bekommen ganze Absaetze (praktisch kein Limit).
+  // Online-Stimmen (Google) brechen in Chrome nach ca. 15 s ab: dort Satzgruppen passend zum Tempo,
+  // zusaetzlich haelt der Wachhund (startSpeechWatch) sie am Laufen.
+  function isOnlineVoice(lang) {
     const v = getBestVoice(lang);
-    return v && v.localService === false ? 230 : 1800;
+    return !!(v && v.localService === false);
+  }
+
+  function maxChunkLength(lang) {
+    return isOnlineVoice(lang) ? Math.max(160, Math.round(170 * speechRate)) : 4000;
   }
 
   function splitLong(piece, limit, splitter) {
@@ -640,11 +657,107 @@
     );
   }
 
-  function speakText(text, forcedLang = null) {
+  let speechTok = 0;        // Kennung des aktuellen Sprach-Stuecks (alte Meldungen werden ignoriert)
+  let speechCur = null;     // aktuelles Stueck {text, lang, pos, tries}
+  let speechWatch = null;
+  let speechIdle = 0;
+
+  // === Microsoft-Stimme (Azure, Seraphina) ===
+  // Spielt unsichtbar im Add-on (ocr.html/tts.js). Faellt sie aus (Kontingent leer, kein Internet,
+  // Schluessel falsch), liest die normale Stimme an derselben Stelle weiter.
+  let azureKeySet = false;
+  let azureSwitch = true;
+  let azureJob = null;        // {id, chunks, cur, forcedLang}
+  let azureBlockedUntil = 0;  // nach einem Ausfall eine Weile die normale Stimme nehmen
+
+  function cancelSpeech() {
     window.speechSynthesis.cancel();
+    if (azureJob) {
+      chrome.runtime.sendMessage({ action: "azureStop", id: azureJob.id }, () => void chrome.runtime.lastError);
+      azureJob = null;
+    }
+  }
+
+  const SENTENCES = /[^.!?\u2026]+(?:[.!?\u2026]+["'\u201c\u201d\u00bb)]*|$)/g;
+  function azureChunks(text) {
+    const out = segmentText(text, 1200);
+    // Stufen: erst ein kurzer Satz (schneller Start), dann mittel, dann ganze Absaetze
+    [120, 450].forEach((limit, k) => {
+      if (k >= out.length || out[k].length <= limit) return;
+      let parts = splitLong(out[k], limit, SENTENCES);
+      let head = parts[0];
+      let rest = parts.slice(1).join(" ");
+      if (head.length > limit * 1.4) {
+        const c = splitLong(head, limit, /[^,;:\u2013\u2014]+(?:[,;:\u2013\u2014]+|$)/g);
+        head = c[0];
+        rest = (c.slice(1).join(" ") + " " + rest).trim();
+      }
+      out.splice(k, 1, head, ...(rest ? [rest] : []));
+    });
+    return out.filter(Boolean).map((text) => ({ text }));
+  }
+
+  function speakAzure(text, forcedLang) {
+    const chunks = azureChunks(text);
+    if (!chunks.length) return false;
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    azureJob = { id, chunks, cur: 0, forcedLang };
+    isSpeaking = true;
+    try {
+      chrome.runtime.sendMessage({ action: "azureSpeak", id, chunks, rate: speechRate }, (r) => {
+        if (chrome.runtime.lastError || !r || !r.ok) azureFallback(id, 0, 0);
+      });
+    } catch (e) {
+      azureJob = null;
+      return false;
+    }
+    return true;
+  }
+
+  function azureFallback(id, i, status) {
+    if (!azureJob || azureJob.id !== id || !isSpeaking) return;
+    const job = azureJob;
+    azureJob = null;
+    const hart = status === 401 || status === 403 || status === 429;
+    azureBlockedUntil = Date.now() + (hart ? 30 : 2) * 60000;
+    showToast(status === 401 ? t("azKey") : t("azFail"), "#f59e0b", 2500);
+    const rest = job.chunks.slice(i).map((c) => c.text).join("\n");
+    speechQueue = chunkTextByLangAndLength(rest, job.forcedLang);
+    startSpeechWatch();
+    playNextChunk();
+  }
+
+  function onAzureEvent(m) {
+    if (!azureJob || m.id !== azureJob.id) return;
+    if (m.type === "chunk") azureJob.cur = m.i;
+    else if (m.type === "fail") azureFallback(m.id, m.i, m.status);
+    else if (m.type === "done") {
+      azureJob = null;
+      speechQueue = [];
+      playNextChunk(); // raeumt auf (Markierung weg usw.)
+    }
+  }
+
+  window.addEventListener("pagehide", () => { if (azureJob) cancelSpeech(); });
+
+  // Vorwaermen: beim Druecken der Maus schon mal die Verbindung zu Microsoft aufbauen
+  let azureWarmAt = 0;
+  window.addEventListener("mousedown", () => {
+    if (!azureKeySet || !azureSwitch || Date.now() < azureBlockedUntil || currentMode === "off") return;
+    const now = Date.now();
+    if (now - azureWarmAt < 15000) return;
+    azureWarmAt = now;
+    try { chrome.runtime.sendMessage({ action: "azureWarm" }, () => void chrome.runtime.lastError); } catch (e) {}
+  }, { capture: true, passive: true });
+
+  function speakText(text, forcedLang = null) {
+    speechTok++;
+    cancelSpeech();
     speechPaused = false;
+    if (azureKeySet && azureSwitch && Date.now() > azureBlockedUntil && speakAzure(text, forcedLang)) return;
     speechQueue = chunkTextByLangAndLength(text, forcedLang);
     isSpeaking = true;
+    startSpeechWatch();
     playNextChunk();
   }
 
@@ -653,17 +766,84 @@
       if (isSpeaking && !activeOverlay) { clearBoxHighlight(); removeOcrBox(); } // fertig vorgelesen
       isSpeaking = false;
       speechPaused = false;
+      speechCur = null;
+      stopSpeechWatch();
       return;
     }
     const chunk = speechQueue.shift();
-    const utterance = new SpeechSynthesisUtterance(chunk.text);
+    chunk.pos = 0;
+    chunk.tries = 0;
+    speakChunk(chunk);
+  }
+
+  function getLocalVoice(langCode) {
+    const prefix = langCode.split("-")[0].toLowerCase();
+    return window.speechSynthesis.getVoices().find((v) => v.localService && v.lang.toLowerCase().startsWith(prefix)) || null;
+  }
+
+  // Spricht ein Stueck ab chunk.pos. Bricht es ab, geht es an der letzten Stelle weiter statt zu springen.
+  function speakChunk(chunk) {
+    const tok = ++speechTok;
+    speechCur = chunk;
+    speechIdle = 0;
+    const base = chunk.pos;
+    const utterance = new SpeechSynthesisUtterance(chunk.text.slice(base));
     utterance.lang = chunk.lang;
     utterance.rate = speechRate;
-    const bestVoice = getBestVoice(chunk.lang);
-    if (bestVoice) utterance.voice = bestVoice;
-    utterance.onend = () => { if (isSpeaking) playNextChunk(); };
-    utterance.onerror = () => { if (isSpeaking) playNextChunk(); };
+    // Nach zwei Fehlversuchen auf eine lokale Stimme ausweichen
+    const voice = (chunk.tries >= 2 && getLocalVoice(chunk.lang)) || getBestVoice(chunk.lang);
+    if (voice) utterance.voice = voice;
+    chunk.online = !!(voice && voice.localService === false);
+    utterance.onboundary = (e) => {
+      if (tok === speechTok && e.charIndex > 0) chunk.pos = base + e.charIndex;
+    };
+    utterance.onend = () => {
+      if (tok !== speechTok || !isSpeaking) return;
+      speechCur = null;
+      playNextChunk();
+    };
+    utterance.onerror = () => {
+      if (tok !== speechTok || !isSpeaking) return;
+      resumeChunk(chunk);
+    };
     window.speechSynthesis.speak(utterance);
+  }
+
+  function resumeChunk(chunk) {
+    if (chunk.tries < 4 && chunk.pos < chunk.text.length - 3) {
+      chunk.tries++;
+      const tok = ++speechTok; // alte Meldungen ab jetzt ignorieren
+      setTimeout(() => { if (tok === speechTok && isSpeaking) speakChunk(chunk); }, 200);
+      return;
+    }
+    speechCur = null;
+    playNextChunk();
+  }
+
+  // Wachhund: haelt Online-Stimmen am Laufen und faengt verlorene Ende-Meldungen ab
+  function startSpeechWatch() {
+    if (speechWatch) return;
+    let ticks = 0;
+    speechWatch = setInterval(() => {
+      const synth = window.speechSynthesis;
+      if (!isSpeaking) { stopSpeechWatch(); return; }
+      if (speechPaused || !speechCur) return;
+      ticks++;
+      if (ticks % 10 === 0 && speechCur.online && synth.speaking && !synth.paused) { synth.pause(); synth.resume(); }
+      if (!synth.speaking && !synth.pending) {
+        if (++speechIdle >= 3) {
+          speechIdle = 0;
+          const c = speechCur;
+          // Kurz vor Schluss = fertig; sonst an der letzten Stelle weiterlesen
+          if (c.pos >= c.text.length * 0.9) { speechTok++; speechCur = null; playNextChunk(); }
+          else resumeChunk(c);
+        }
+      } else speechIdle = 0;
+    }, 1000);
+  }
+
+  function stopSpeechWatch() {
+    if (speechWatch) { clearInterval(speechWatch); speechWatch = null; }
   }
 
   function removeOverlay() {
@@ -674,10 +854,13 @@
   }
 
   function stopAllSpeechAndOverlay() {
+    speechTok++;
+    speechCur = null;
+    stopSpeechWatch();
     isSpeaking = false;
     speechPaused = false;
     speechQueue = [];
-    window.speechSynthesis.cancel();
+    cancelSpeech();
     removeOverlay();
   }
 
@@ -1159,7 +1342,7 @@
     } else if (!activeOverlay) {
       isSpeaking = false;
       speechQueue = [];
-      window.speechSynthesis.cancel();
+      cancelSpeech();
     }
   }, true);
 
